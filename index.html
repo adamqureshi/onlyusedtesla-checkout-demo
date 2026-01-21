@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>Only Used Tesla — Ad Checkout Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="app" data-app>
+    <header class="topbar" role="banner">
+      <button class="icon-btn" type="button" data-back aria-label="Go back" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">T</div>
+        <div class="brand-text">
+          <div class="brand-name">Only Used Tesla</div>
+          <div class="brand-sub">Ad checkout flow (mobile demo)</div>
+        </div>
+      </div>
+
+      <button class="icon-btn" type="button" data-help aria-label="Help">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18h.01M9.09 9a3 3 0 0 1 5.82 1c0 2-3 2-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </header>
+
+    <div class="stepper-shell" aria-label="Progress">
+      <div class="stepper-pill" role="group" aria-label="Checkout steps">
+        <ol class="stepper" data-stepper>
+          <li class="stepper-step" data-step-index="1"><span class="step-circle">1</span><span class="step-label">Type</span></li>
+          <li class="stepper-step" data-step-index="2"><span class="step-circle">2</span><span class="step-label">Details</span></li>
+          <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Boost</span></li>
+          <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Pay</span></li>
+          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Done</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <main id="main" class="main" role="main">
+      <!-- Step 1 -->
+      <section class="step is-active" data-step="1" aria-labelledby="s1-title">
+        <div class="card">
+          <h1 id="s1-title">Create a listing</h1>
+          <p class="muted">
+            Quick setup now, polish later. We’ll guide you and save your progress as you go.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Choose listing type</h2>
+          <p class="muted">Pick what you want to do today. You can change this before you pay.</p>
+
+          <div class="segmented" role="radiogroup" aria-label="Listing type">
+            <button class="seg-btn is-selected" type="button" role="radio" aria-checked="true" data-choice="sell">Sell my Tesla</button>
+            <button class="seg-btn" type="button" role="radio" aria-checked="false" data-choice="boost">Boost an existing listing</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">List on onlyusedtesla.com</div>
+              <div class="row-sub">Your listing will appear in search results.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="listOnSite" checked />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">List on onlyusedtesla.com</span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Boost with an ad <span class="pill">Recommended</span></div>
+              <div class="row-sub">Get more eyes on your listing faster.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="boostWithAd" checked />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Boost with an ad</span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Include Cash Offer</div>
+              <div class="row-sub">Request an offer if you’d like a quick sale.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="cashOffer" />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Include Cash Offer</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="sticky-cta">
+          <div class="cta-inner">
+            <div class="cta-hint" aria-live="polite" data-cta-hint>
+              Step 1 of 5 — You’re off to a great start.
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-next>
+              Next
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2 -->
+      <section class="step" data-step="2" aria-labelledby="s2-title">
+        <div class="card">
+          <h1 id="s2-title">Listing details</h1>
+          <p class="muted">
+            Keep it simple. A solid summary and accurate basics are enough to run an ad.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Photos (optional)</h2>
+          <p class="muted">Add photos later — your ad can still run with a great summary.</p>
+
+          <label class="upload">
+            <input type="file" accept="image/*" multiple />
+            <span class="upload-box" role="button" tabindex="0">
+              <span class="upload-title">Add photos</span>
+              <span class="upload-sub">Tap to choose from your phone</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Basics</h2>
+
+          <div class="grid">
+            <div class="field" data-validate="model">
+              <label for="model">Model <span class="req">*</span></label>
+              <select id="model" data-field="model" autocomplete="off">
+                <option value="">Select…</option>
+                <option>Model 3</option>
+                <option>Model S</option>
+                <option>Model X</option>
+                <option>Model Y</option>
+                <option>Cybertruck</option>
+              </select>
+              <div class="field-msg" data-msg></div>
+            </div>
+
+            <div class="field" data-validate="year">
+              <label for="year">Year <span class="req">*</span></label>
+              <select id="year" data-field="year" autocomplete="off">
+                <option value="">Select…</option>
+                <option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option>
+                <option>2020</option><option>2019</option><option>2018</option><option>2017</option><option>2016</option>
+                <option>2015</option><option>2014</option><option>2013</option><option>2012</option>
+              </select>
+              <div class="field-msg" data-msg></div>
+            </div>
+
+            <div class="field">
+              <label for="miles">Mileage</label>
+              <input id="miles" type="number" inputmode="numeric" min="0" placeholder="e.g., 42,500" data-field="miles" />
+              <div class="field-hint">Optional</div>
+            </div>
+
+            <div class="field" data-validate="price">
+              <label for="price">Price <span class="req">*</span></label>
+              <div class="input-prefix">
+                <span aria-hidden="true">$</span>
+                <input id="price" type="number" inputmode="numeric" min="0" placeholder="e.g., 28900" data-field="price" />
+              </div>
+              <div class="field-msg" data-msg></div>
+            </div>
+
+            <div class="field" data-validate="zip">
+              <label for="zip">ZIP <span class="req">*</span></label>
+              <input id="zip" type="text" inputmode="numeric" maxlength="10" placeholder="e.g., 43215" data-field="zip" />
+              <div class="field-msg" data-msg></div>
+            </div>
+
+            <div class="field" data-validate="state">
+              <label for="state">State <span class="req">*</span></label>
+              <select id="state" data-field="state" autocomplete="off">
+                <option value="">Select…</option>
+                <option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option>
+                <option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option>
+                <option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option>
+                <option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option>
+                <option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option>
+                <option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+              </select>
+              <div class="field-msg" data-msg></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Autopilot</div>
+              <div class="row-sub">Toggle on if the car currently has Autopilot enabled.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="autopilot" />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Autopilot</span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field field-wide" data-validate="summary">
+            <label for="summary">Summary <span class="req">*</span></label>
+            <textarea id="summary" rows="6" data-field="summary" placeholder="What makes your Tesla stand out? (battery, wheels, FSD, service history, clean title, etc.)"></textarea>
+
+            <div class="field-meta">
+              <div class="field-hint">
+                Aim for <strong>80–200</strong> characters. Minimum <strong>50</strong>.
+              </div>
+              <div class="counter" aria-live="polite">
+                <span data-summary-count>0</span>/<span data-summary-max>500</span>
+              </div>
+            </div>
+
+            <div class="field-msg" data-msg></div>
+          </div>
+
+          <div class="mini-note" aria-live="polite" data-draft-status>
+            Draft saving is on.
+          </div>
+        </div>
+
+        <div class="sticky-cta">
+          <div class="cta-inner">
+            <div class="cta-hint" aria-live="polite" data-cta-hint>
+              Step 2 of 5 — Almost there.
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-next>
+              Continue
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3 -->
+      <section class="step" data-step="3" aria-labelledby="s3-title">
+        <div class="card">
+          <h1 id="s3-title">Boost your listing</h1>
+          <p class="muted">
+            Choose a simple ad package. You can pause or edit later from your dashboard.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Ad packages</h2>
+          <p class="muted">Tap a package to select it.</p>
+
+          <div class="plan-grid" role="radiogroup" aria-label="Ad packages">
+            <button class="plan is-selected" type="button" role="radio" aria-checked="true" data-plan="standard">
+              <div class="plan-top">
+                <div class="plan-name">Standard</div>
+                <div class="plan-price">$49</div>
+              </div>
+              <div class="plan-sub">7 days · Great for most sellers</div>
+              <ul class="plan-list">
+                <li>Featured placement</li>
+                <li>Category targeting</li>
+                <li>Basic reporting</li>
+              </ul>
+            </button>
+
+            <button class="plan" type="button" role="radio" aria-checked="false" data-plan="pro">
+              <div class="plan-top">
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$89</div>
+              </div>
+              <div class="plan-sub">14 days · More visibility</div>
+              <ul class="plan-list">
+                <li>Higher placement</li>
+                <li>More impressions</li>
+                <li>Performance tips</li>
+              </ul>
+            </button>
+
+            <button class="plan" type="button" role="radio" aria-checked="false" data-plan="max">
+              <div class="plan-top">
+                <div class="plan-name">Max</div>
+                <div class="plan-price">$149</div>
+              </div>
+              <div class="plan-sub">30 days · Best value</div>
+              <ul class="plan-list">
+                <li>Top placement boost</li>
+                <li>Largest reach</li>
+                <li>Priority support</li>
+              </ul>
+            </button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="summary-box">
+            <div class="summary-title">What you’re promoting</div>
+            <div class="summary-body" data-listing-preview>
+              <div class="preview-title">—</div>
+              <div class="preview-sub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-cta">
+          <div class="cta-inner">
+            <div class="cta-hint" aria-live="polite" data-cta-hint>
+              Step 3 of 5 — Pick a package.
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-next>
+              Continue to checkout
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4 -->
+      <section class="step" data-step="4" aria-labelledby="s4-title">
+        <div class="card">
+          <h1 id="s4-title">Checkout</h1>
+          <p class="muted">
+            Secure checkout powered by Stripe. We’ll email your receipt and a sign‑in link so you can manage your ad without a password.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Order summary</h2>
+
+          <div class="order">
+            <div class="order-row">
+              <div>
+                <div class="order-title" data-order-plan>Standard</div>
+                <div class="order-sub" data-order-plan-sub>7 days</div>
+              </div>
+              <div class="order-amt" data-order-price>$49.00</div>
+            </div>
+
+            <div class="order-row order-row-muted">
+              <div>Estimated tax</div>
+              <div data-order-tax>$0.00</div>
+            </div>
+
+            <div class="order-row order-total">
+              <div>Total</div>
+              <div data-order-total>$49.00</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field" data-validate="email">
+            <label for="email">Email <span class="req">*</span></label>
+            <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" data-field="email" />
+            <div class="field-hint">We’ll send your receipt and a secure sign-in link here.</div>
+            <div class="field-msg" data-msg></div>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Email me a sign‑in link</div>
+              <div class="row-sub">No password needed. You’ll manage your ad from the link.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="magicLink" checked />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Email me a sign-in link</span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="stripe-box" aria-label="Stripe checkout placeholder">
+            <div class="stripe-badge">Powered by Stripe</div>
+            <div class="stripe-copy">
+              You’ll be redirected to a secure Stripe checkout page to complete payment.
+            </div>
+          </div>
+
+          <div class="legal muted">
+            By continuing, you agree to our <a href="#" onclick="return false;">Terms</a> and <a href="#" onclick="return false;">Privacy Policy</a>.
+          </div>
+        </div>
+
+        <div class="sticky-cta">
+          <div class="cta-inner">
+            <div class="cta-hint" aria-live="polite" data-cta-hint>
+              Step 4 of 5 — Ready to pay.
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-pay>
+              Continue to secure payment
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 5 -->
+      <section class="step" data-step="5" aria-labelledby="s5-title">
+        <div class="card card-success">
+          <div class="success-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h1 id="s5-title">You’re all set</h1>
+          <p class="muted">
+            Your ad is queued and your listing is saved. We’ll email you a receipt and a sign‑in link to manage everything.
+          </p>
+
+          <div class="receipt">
+            <div class="receipt-row"><span>Reference</span><strong data-ref>OUT‑DEMO‑0001</strong></div>
+            <div class="receipt-row"><span>Package</span><strong data-receipt-plan>Standard</strong></div>
+            <div class="receipt-row"><span>Total</span><strong data-receipt-total>$49.00</strong></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary btn-block" type="button" data-start-over>
+              Create another listing
+            </button>
+            <button class="btn btn-ghost btn-block" type="button" data-view-dashboard>
+              View dashboard (demo)
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">What happens next</h2>
+          <ol class="next-steps">
+            <li><strong>Receipt + sign‑in link</strong> arrives by email.</li>
+            <li><strong>Your ad starts</strong> once your listing is live.</li>
+            <li><strong>Need edits?</strong> Use the link to update photos, price, or the summary anytime.</li>
+          </ol>
+          <div class="muted small">
+            Tip: The fastest listings mention battery health, wheel/tire condition, and any warranty coverage.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+      <div class="footer-inner">
+        <div class="muted small">Only Used Tesla · Checkout demo UI</div>
+        <button class="link-btn" type="button" data-reset-draft>Reset demo data</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Help dialog -->
+  <dialog class="dialog" data-help-dialog>
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <div>
+          <div class="dialog-title">Need a hand?</div>
+          <div class="muted">This is a demo flow. In production, this can open live chat or a help center.</div>
+        </div>
+        <button class="icon-btn" value="cancel" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="callout">
+          <div class="callout-title">Design goals for “fat finger” mobile</div>
+          <ul class="callout-list">
+            <li>Big buttons (min 52px), sticky bottom CTA</li>
+            <li>1 primary action per screen</li>
+            <li>Friendly validation (green = good, clear errors)</li>
+            <li>Passwordless by default (magic link after purchase)</li>
+          </ul>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="btn btn-primary btn-block" value="ok">Got it</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Tiny toast -->
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden data-toast>
+    Saved
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
