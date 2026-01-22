@@ -34,9 +34,9 @@
         <ol class="stepper" data-stepper>
           <li class="stepper-step" data-step-index="1"><span class="step-circle">1</span><span class="step-label">Type</span></li>
           <li class="stepper-step" data-step-index="2"><span class="step-circle">2</span><span class="step-label">Details</span></li>
-          <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Boost</span></li>
+          <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Preview</span></li>
           <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Pay</span></li>
-          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Done</span></li>
+          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Publish</span></li>
         </ol>
       </div>
     </div>
@@ -137,6 +137,24 @@
           <h2 class="h2">Basics</h2>
 
           <div class="grid">
+            <div class="field field-wide" data-validate="vin">
+              <label for="vin">VIN <span class="req">*</span></label>
+              <input id="vin"
+                     class="vin-input"
+                     type="text"
+                     inputmode="text"
+                     autocomplete="off"
+                     autocapitalize="characters"
+                     spellcheck="false"
+                     placeholder="17 characters (e.g., 5YJ3 E1EA 7KF0 12345)"
+                     maxlength="20"
+                     data-field="vin" />
+              <div class="field-hint">
+                Tip: paste it from your registration, insurance, or Tesla app. VINs are <strong>17 characters</strong> (letters <strong>I, O, Q</strong> aren’t used).
+              </div>
+              <div class="field-msg" data-msg></div>
+            </div>
+
             <div class="field" data-validate="model">
               <label for="model">Model <span class="req">*</span></label>
               <select id="model" data-field="model" autocomplete="off">
@@ -247,7 +265,7 @@
               Step 2 of 5 — Almost there.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
-              Continue
+              Preview your ad
             </button>
           </div>
         </div>
@@ -256,14 +274,32 @@
       <!-- Step 3 -->
       <section class="step" data-step="3" aria-labelledby="s3-title">
         <div class="card">
-          <h1 id="s3-title">Boost your listing</h1>
+          <h1 id="s3-title">Preview your ad</h1>
           <p class="muted">
-            Choose a simple ad package. You can pause or edit later from your dashboard.
+            This is what buyers will see. Looks good? Choose a package and continue to payment.
           </p>
         </div>
 
         <div class="card">
-          <h2 class="h2">Ad packages</h2>
+          <h2 class="h2">Your ad preview</h2>
+
+          <div class="ad-preview" data-ad-preview>
+            <div class="ad-preview-title" data-ad-title>—</div>
+            <div class="ad-preview-sub" data-ad-sub>—</div>
+            <div class="ad-preview-body" data-ad-body>—</div>
+            <div class="ad-preview-meta">
+              <span class="meta-pill" data-ad-vin>VIN —</span>
+              <span class="meta-pill" data-ad-ap>Autopilot —</span>
+            </div>
+          </div>
+
+          <div class="inline-actions">
+            <button class="btn btn-ghost btn-block" type="button" data-edit-details>Edit details</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2 class="h2">Choose an ad package</h2>
           <p class="muted">Tap a package to select it.</p>
 
           <div class="plan-grid" role="radiogroup" aria-label="Ad packages">
@@ -306,25 +342,15 @@
               </ul>
             </button>
           </div>
-
-          <div class="divider"></div>
-
-          <div class="summary-box">
-            <div class="summary-title">What you’re promoting</div>
-            <div class="summary-body" data-listing-preview>
-              <div class="preview-title">—</div>
-              <div class="preview-sub">—</div>
-            </div>
-          </div>
         </div>
 
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 3 of 5 — Pick a package.
+              Step 3 of 5 — Looks good.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
-              Continue to checkout
+              Continue to payment
             </button>
           </div>
         </div>
@@ -333,9 +359,9 @@
       <!-- Step 4 -->
       <section class="step" data-step="4" aria-labelledby="s4-title">
         <div class="card">
-          <h1 id="s4-title">Checkout</h1>
+          <h1 id="s4-title">Pay &amp; publish</h1>
           <p class="muted">
-            Secure checkout powered by Stripe. We’ll email your receipt and a sign‑in link so you can manage your ad without a password.
+            Secure checkout powered by Stripe. After payment, your ad is submitted for a brief review and will go live soon.
           </p>
         </div>
 
@@ -367,7 +393,7 @@
           <div class="field" data-validate="email">
             <label for="email">Email <span class="req">*</span></label>
             <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" data-field="email" />
-            <div class="field-hint">We’ll send your receipt and a secure sign-in link here.</div>
+            <div class="field-hint">We’ll send your receipt and a secure sign‑in link here.</div>
             <div class="field-msg" data-msg></div>
           </div>
 
@@ -403,7 +429,7 @@
               Step 4 of 5 — Ready to pay.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-pay>
-              Continue to secure payment
+              Pay &amp; submit for review
             </button>
           </div>
         </div>
@@ -415,9 +441,10 @@
           <div class="success-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h1 id="s5-title">You’re all set</h1>
+          <h1 id="s5-title">Ad submitted</h1>
           <p class="muted">
-            Your ad is queued and your listing is saved. We’ll email you a receipt and a sign‑in link to manage everything.
+            Payment received. Your ad is queued for a brief review and should be live soon.
+            We’ll email your receipt and a sign‑in link so you can manage everything without a password.
           </p>
 
           <div class="receipt">
@@ -431,7 +458,7 @@
               Create another listing
             </button>
             <button class="btn btn-ghost btn-block" type="button" data-view-dashboard>
-              View dashboard (demo)
+              Manage my ad (demo)
             </button>
           </div>
         </div>
@@ -440,8 +467,8 @@
           <h2 class="h2">What happens next</h2>
           <ol class="next-steps">
             <li><strong>Receipt + sign‑in link</strong> arrives by email.</li>
-            <li><strong>Your ad starts</strong> once your listing is live.</li>
-            <li><strong>Need edits?</strong> Use the link to update photos, price, or the summary anytime.</li>
+            <li><strong>Brief review</strong> helps keep listings accurate and safe.</li>
+            <li><strong>Your ad goes live</strong> as soon as the listing is approved.</li>
           </ol>
           <div class="muted small">
             Tip: The fastest listings mention battery health, wheel/tire condition, and any warranty coverage.

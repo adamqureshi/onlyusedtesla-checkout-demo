@@ -4,20 +4,18 @@
  * This file intentionally uses small, framework-free JavaScript
  * to demonstrate the mobile checkout journey and validations.
  *
- * Integration notes for your backend dev:
- * - Replace the "simulateStripeRedirect()" with a call to your backend
- *   that creates a Stripe Checkout Session, then redirect to Stripe.
- *   Example shape:
- *     const res = await fetch('/api/stripe/create-checkout-session', { method:'POST', body: JSON.stringify(payload) })
- *     const { url } = await res.json()
- *     window.location.href = url
+ * Key additions in v2:
+ * - REQUIRED VIN (17 chars) with friendly validation
+ * - VIN auto-formatting: 4-4-4-5 spacing for readability
+ * - Step 3 is now "Preview your ad" before payment
+ * - Step 5 messaging: queued for brief review
  */
 
 (function () {
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const STORAGE_KEY = "out_checkout_demo_v1";
+  const STORAGE_KEY = "out_checkout_demo_v2";
 
   const plans = {
     standard: { name: "Standard", days: 7, price: 49 },
@@ -33,6 +31,7 @@
       boostWithAd: true,
       cashOffer: false,
 
+      vin: "",
       model: "",
       year: "",
       miles: "",
@@ -61,9 +60,7 @@
         state.listingType = saved.listingType ?? state.listingType;
         state.fields = { ...state.fields, ...(saved.fields || {}) };
       }
-    } catch (e) {
-      // If parsing fails, ignore. (Demo should never block.)
-    }
+    } catch (e) {}
   }
 
   let toastTimer = null;
@@ -81,9 +78,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if (show) showToast("Saved");
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   }
 
   function resetDraft() {
@@ -115,7 +110,8 @@
       el.textContent = `Step ${state.step} of 5 — ${hintForStep(state.step)}`;
     });
 
-    updatePreview();
+    updateSummaryCounter();
+    updateAdPreview();
     updateOrder();
 
     save(false);
@@ -126,9 +122,9 @@
     switch (step) {
       case 1: return "You’re off to a great start.";
       case 2: return "You’re doing great. Keep it simple.";
-      case 3: return "Pick a package that fits your timeline.";
-      case 4: return "Ready to pay.";
-      case 5: return "Done. Nice work.";
+      case 3: return "Quick preview before payment.";
+      case 4: return "Secure checkout.";
+      case 5: return "Submitted. Nice work.";
       default: return "";
     }
   }
@@ -145,9 +141,36 @@
     if (msgEl) msgEl.textContent = message;
   }
 
+  function clearFieldState(validateKey) {
+    const fieldWrap = $(`[data-validate="${validateKey}"]`);
+    if (!fieldWrap) return;
+    fieldWrap.classList.remove("is-valid", "is-invalid");
+    const msgEl = $("[data-msg]", fieldWrap);
+    if (msgEl) msgEl.textContent = "";
+  }
+
   function isEmailValid(email) {
-    // Gentle validation for UX: basic check only.
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+  }
+
+  // VIN rules: 17 chars, digits + capital letters except I, O, Q.
+  function normalizeVin(raw) {
+    return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+  function isVinValid(vinRaw) {
+    const vin = normalizeVin(vinRaw);
+    return /^[A-HJ-NPR-Z0-9]{17}$/.test(vin);
+  }
+
+  // Display spacing: 4-4-4-5
+  function formatVinDisplay(vinRaw) {
+    const vin = normalizeVin(vinRaw).slice(0, 17);
+    const parts = [];
+    parts.push(vin.slice(0, 4));
+    parts.push(vin.slice(4, 8));
+    parts.push(vin.slice(8, 12));
+    parts.push(vin.slice(12, 17));
+    return parts.filter(Boolean).join(" ");
   }
 
   function validateStep(step) {
@@ -155,6 +178,21 @@
 
     if (step === 2) {
       const f = state.fields;
+
+      // VIN required
+      const vin = normalizeVin(f.vin);
+      if (!vin) {
+        ok = false;
+        setFieldState("vin", false, "Please enter your VIN (17 characters).");
+      } else if (vin.length !== 17) {
+        ok = false;
+        setFieldState("vin", false, "VINs are 17 characters — almost there.");
+      } else if (!isVinValid(vin)) {
+        ok = false;
+        setFieldState("vin", false, "That VIN doesn’t look right. VINs don’t use the letters I, O, or Q.");
+      } else {
+        setFieldState("vin", true, "");
+      }
 
       // Required: model
       if (!String(f.model).trim()) {
@@ -219,12 +257,18 @@
     if (maxEl) maxEl.textContent = String(max);
   }
 
-  function updatePreview() {
-    const p = $("[data-listing-preview]");
-    if (!p) return;
+  function maskedVinForPreview(vinRaw) {
+    const vin = normalizeVin(vinRaw);
+    if (!vin) return "VIN —";
+    if (vin.length < 6) return `VIN ${vin}`;
+    const last6 = vin.slice(-6);
+    return `VIN •••••••••••${last6}`;
+  }
 
+  function updateAdPreview() {
     const f = state.fields;
 
+    // Build title/sub for preview
     const title = `${f.year || "—"} ${f.model || "Tesla"}${f.autopilot ? " · Autopilot" : ""}`;
     const subParts = [];
     if (f.price) subParts.push(`$${Number(f.price).toLocaleString()}`);
@@ -232,8 +276,19 @@
     if (f.state) subParts.push(f.state);
     const sub = subParts.length ? subParts.join(" · ") : "—";
 
-    $(".preview-title", p).textContent = title;
-    $(".preview-sub", p).textContent = sub;
+    const body = String(f.summary || "").trim() || "—";
+
+    const titleEl = $("[data-ad-title]");
+    const subEl = $("[data-ad-sub]");
+    const bodyEl = $("[data-ad-body]");
+    const vinEl = $("[data-ad-vin]");
+    const apEl = $("[data-ad-ap]");
+
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = sub;
+    if (bodyEl) bodyEl.textContent = body;
+    if (vinEl) vinEl.textContent = maskedVinForPreview(f.vin);
+    if (apEl) apEl.textContent = f.autopilot ? "Autopilot On" : "Autopilot Off";
   }
 
   function updateOrder() {
@@ -262,8 +317,6 @@
       btn.setAttribute("aria-checked", selected ? "true" : "false");
     });
 
-    // If user chooses "boost existing", we can relax required listing fields in a real build.
-    // For demo, we still show listing fields (because many sellers create a new listing).
     save(true);
   }
 
@@ -283,15 +336,11 @@
 
   // ----------- Stripe simulation -----------
   async function simulateStripeRedirect() {
-    // Friendly UX: show a quick toast, then "complete".
     showToast("Opening Stripe checkout…");
     await new Promise((r) => setTimeout(r, 650));
 
-    // In production: redirect to Stripe Checkout URL.
-    // window.location.href = urlFromBackend;
     setStep(5);
 
-    // Make a quick-looking reference
     const ref = `OUT-DEMO-${String(Math.floor(1000 + Math.random() * 9000))}`;
     const refEl = $("[data-ref]");
     if (refEl) refEl.textContent = ref;
@@ -304,18 +353,17 @@
       btn.addEventListener("click", () => {
         const step = state.step;
 
-        // If Step 2 -> Step 3 and user turned off boosting, skip to Step 4
+        if (step === 1) return setStep(2);
+
         if (step === 2) {
           const ok = validateStep(2);
           if (!ok) return;
-          if (!state.fields.boostWithAd) return setStep(4);
           return setStep(3);
         }
 
         if (step === 3) return setStep(4);
-        if (step === 1) return setStep(2);
 
-        // For safety
+        // Safety
         setStep(step + 1);
       });
     });
@@ -325,6 +373,10 @@
       if (state.step <= 1) return;
       setStep(state.step - 1);
     });
+
+    // Edit details from preview
+    const editBtn = $("[data-edit-details]");
+    if (editBtn) editBtn.addEventListener("click", () => setStep(2));
 
     // Pay
     $("[data-pay]").addEventListener("click", () => {
@@ -341,7 +393,7 @@
 
     // Demo dashboard button
     $("[data-view-dashboard]").addEventListener("click", () => {
-      alert("Dashboard is not included in this UI demo yet.\n\nNext step: build the “Manage your ad” experience after checkout.");
+      alert("Manage-your-ad is the next build step.\n\nNext: add edit listing, pause ad, renew, and reporting.");
     });
 
     // Help dialog
@@ -371,29 +423,54 @@
       if (el.type === "checkbox") {
         el.checked = Boolean(state.fields[key]);
       } else {
-        el.value = state.fields[key] ?? "";
+        // VIN is displayed formatted
+        if (key === "vin") {
+          el.value = formatVinDisplay(state.fields.vin);
+        } else {
+          el.value = state.fields[key] ?? "";
+        }
       }
 
       const handler = () => {
         if (el.type === "checkbox") {
           state.fields[key] = el.checked;
         } else {
-          state.fields[key] = el.value;
+          if (key === "vin") {
+            // Format as user types
+            const formatted = formatVinDisplay(el.value);
+            el.value = formatted;
+            state.fields.vin = normalizeVin(formatted); // store normalized
+          } else {
+            state.fields[key] = el.value;
+          }
         }
 
         // Live counter + validation glow on summary
         if (key === "summary") {
           updateSummaryCounter();
-          // Soft real-time validation: green when good.
           const good = String(state.fields.summary || "").trim().length >= 50 && String(state.fields.summary || "").length <= 500;
           setFieldState("summary", good, good ? "" : "Add at least 50 characters.");
+        }
+
+        // VIN live validation: show green when valid; show red if length == 17 but invalid.
+        if (key === "vin") {
+          const vin = normalizeVin(state.fields.vin);
+          if (!vin) {
+            clearFieldState("vin");
+          } else if (vin.length < 17) {
+            // keep neutral while typing
+            clearFieldState("vin");
+          } else if (vin.length === 17 && isVinValid(vin)) {
+            setFieldState("vin", true, "");
+          } else {
+            setFieldState("vin", false, "That VIN doesn’t look right. VINs don’t use I, O, or Q.");
+          }
         }
 
         // Soft real-time email validation on checkout
         if (key === "email") {
           const good = isEmailValid(state.fields.email || "");
           if (!String(state.fields.email || "").trim()) {
-            // don't show error while empty until user tries to pay
             const fieldWrap = $('[data-validate="email"]');
             fieldWrap.classList.remove("is-valid", "is-invalid");
             return;
@@ -401,9 +478,8 @@
           setFieldState("email", good, good ? "" : "That email doesn’t look right — please double-check.");
         }
 
-        // Soft validations for selects/required fields
+        // Soft validations for selects/required fields (except VIN handled above)
         if (["model","year","price","zip","state"].includes(key)) {
-          // Only show green when filled; avoid red while typing.
           const wrap = $(`[data-validate="${key}"]`);
           if (!wrap) return;
 
@@ -418,7 +494,7 @@
           }
         }
 
-        updatePreview();
+        updateAdPreview();
         updateOrder();
 
         // Draft save feedback (not too noisy)
@@ -431,6 +507,17 @@
 
       el.addEventListener("input", handler);
       el.addEventListener("change", handler);
+
+      // On blur, if VIN exists but not valid, show an error (nice clarity)
+      if (key === "vin") {
+        el.addEventListener("blur", () => {
+          const vin = normalizeVin(state.fields.vin);
+          if (!vin) return;
+          if (vin.length !== 17) return setFieldState("vin", false, "VINs are 17 characters — please double-check.");
+          if (!isVinValid(vin)) return setFieldState("vin", false, "That VIN doesn’t look right. VINs don’t use I, O, or Q.");
+          setFieldState("vin", true, "");
+        });
+      }
     });
   }
 
@@ -443,9 +530,8 @@
   // Initialize plan selection UI
   setPlan(state.fields.plan);
 
-  // Initialize summary counter
   updateSummaryCounter();
-  updatePreview();
+  updateAdPreview();
   updateOrder();
 
   wire();

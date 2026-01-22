@@ -402,7 +402,13 @@ p{ margin: 0 0 10px; }
 .field.is-valid select,
 .field.is-valid textarea{
   border-color: rgba(31,157,87,.95);
-  box-shadow: 0 0 0 4px rgba(31,157,87,.10);
+  box-shadow: 0 0 0 5px rgba(31,157,87,.12);
+}
+
+/* VIN styling: make it readable and "space it out" */
+.vin-input{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: .08em;
 }
 
 .input-prefix{
@@ -430,7 +436,7 @@ p{ margin: 0 0 10px; }
 }
 .field.is-valid .input-prefix{
   border-color: rgba(31,157,87,.95);
-  box-shadow: 0 0 0 4px rgba(31,157,87,.10);
+  box-shadow: 0 0 0 5px rgba(31,157,87,.12);
 }
 
 .field-meta{
@@ -512,15 +518,44 @@ p{ margin: 0 0 10px; }
   line-height: 1.4;
 }
 
-.summary-box{
+/* Ad preview card (Step 3) */
+.ad-preview{
   border-radius: var(--radius);
   border: 1px solid rgba(216,221,226,.95);
-  background: rgba(245,246,247,.5);
-  padding: 12px;
+  background: rgba(245,246,247,.55);
+  padding: 14px;
 }
-.summary-title{ font-weight: 800; margin-bottom: 6px; }
-.preview-title{ font-weight: 850; }
-.preview-sub{ color: var(--muted); margin-top: 2px; }
+.ad-preview-title{
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+}
+.ad-preview-sub{
+  color: var(--muted);
+  margin-top: 4px;
+}
+.ad-preview-body{
+  margin-top: 10px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.ad-preview-meta{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.meta-pill{
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid rgba(216,221,226,.95);
+  background: rgba(255,255,255,.75);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+.inline-actions{
+  margin-top: 10px;
+}
 
 .order{
   border-radius: var(--radius);
