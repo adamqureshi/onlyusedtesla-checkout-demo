@@ -1,35 +1,48 @@
-# Only Used Tesla — Checkout Flow Demo (Mobile) v2
+# Only Used Tesla — Embedded Payments Checkout Demo (v3)
 
-This is a **UI-only** prototype of a fast, “fat finger” friendly **ad checkout flow** for OnlyUsedTesla.com.
+This is a **UI prototype** of a fast mobile checkout flow that keeps the user **inside your site** for payment.
 
-## What changed in v2
+## Recommended Stripe product for this UX
 
-- ✅ **VIN is now required** (17 characters)
-- ✅ VIN input is **spaced out automatically** for readability (4-4-4-5)
-- ✅ Clear **success (green ring) / error (red ring)** validation for VIN
-- ✅ Added **Preview your ad** step before payment
-- ✅ Updated final message: **“queued for a brief review”** before the ad goes live
+Use **Stripe Elements (Payment Element)** with the **Payment Intents API**.
 
-## Steps
+Why:
+- You control the **order summary** and the “Change package” UX
+- The payment form is embedded **inside your app**
+- Stripe still handles sensitive payment details through Stripe.js
 
-1) Type  
-2) Details (VIN + listing details)  
-3) Preview (ad preview + package selection)  
-4) Pay & publish (Stripe handoff UI)  
-5) Publish (submitted + queued for review)
+## Backend endpoints expected
 
-## How to run
+- `POST /api/create-payment-intent`
+  - Input: `{ plan, email, listing }`
+  - Output: `{ clientSecret, paymentIntentId }`
 
-Open `index.html` or run:
+- `POST /api/update-payment-intent`
+  - Input: `{ paymentIntentId, plan }`
+  - Output: `{ ok }`
 
-```bash
-python3 -m http.server 8080
-```
+> Important: amounts must be calculated on the server. Don’t trust totals from the browser.
 
-## Stripe integration (backend hook)
+## How to enable real Stripe Payment Element in this demo
 
-Replace the simulated redirect in `app.js` inside `simulateStripeRedirect()` with:
+1. Put your Stripe publishable key into `index.html`:
+   ```js
+   window.ONLYUSEDTESLA_STRIPE_PK = "pk_test_...";
+   ```
 
-1. POST payload to backend
-2. Backend creates Stripe Checkout Session
-3. Redirect to `session.url`
+2. Run the example server in `/server` and make sure it exposes:
+   - `/api/create-payment-intent`
+   - `/api/update-payment-intent`
+
+3. Open the demo and go to Step 4 — the Payment Element mounts automatically.
+
+## Files
+
+- `index.html` — checkout UI and mount points for Stripe Elements
+- `styles.css` — grayscale, mobile-friendly styling
+- `app.js` — step flow + VIN validation + Stripe mount scaffolding
+- `/server` — example Node server (PaymentIntent create/update)
+
+## Notes
+
+Some payment methods (and 3DS authentication) may redirect for confirmation depending on the customer’s bank and payment method. For cards, the flow typically completes inline.

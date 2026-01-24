@@ -4,8 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <title>Only Used Tesla — Ad Checkout Demo</title>
+  <title>Only Used Tesla — Ad Checkout Demo (Embedded Payments)</title>
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Stripe.js (only used when you provide a publishable key + backend endpoints) -->
+  <script>
+    // ✅ Dev: Set this in production via your templating/env pipeline.
+    // Example: window.ONLYUSEDTESLA_STRIPE_PK = "pk_live_...";
+    window.ONLYUSEDTESLA_STRIPE_PK = "";
+    // Optional: if your API is on a different domain, set a base URL.
+    // Example: window.ONLYUSEDTESLA_API_BASE = "https://api.onlyusedtesla.com";
+    window.ONLYUSEDTESLA_API_BASE = "";
+  </script>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -20,7 +31,7 @@
         <div class="brand-mark" aria-hidden="true">T</div>
         <div class="brand-text">
           <div class="brand-name">Only Used Tesla</div>
-          <div class="brand-sub">Ad checkout flow (mobile demo)</div>
+          <div class="brand-sub">Embedded payments demo (mobile)</div>
         </div>
       </div>
 
@@ -300,7 +311,7 @@
           <div class="divider"></div>
 
           <h2 class="h2">Choose an ad package</h2>
-          <p class="muted">Tap a package to select it.</p>
+          <p class="muted">Tap a package to select it. You can still change this on the payment screen.</p>
 
           <div class="plan-grid" role="radiogroup" aria-label="Ad packages">
             <button class="plan is-selected" type="button" role="radio" aria-checked="true" data-plan="standard">
@@ -361,12 +372,12 @@
         <div class="card">
           <h1 id="s4-title">Pay &amp; publish</h1>
           <p class="muted">
-            Secure checkout powered by Stripe. After payment, your ad is submitted for a brief review and will go live soon.
+            Review what you’re buying from Only Used Tesla, then pay securely right here. After payment, your ad is submitted for a brief review and should be live soon.
           </p>
         </div>
 
         <div class="card">
-          <h2 class="h2">Order summary</h2>
+          <h2 class="h2">Your order</h2>
 
           <div class="order">
             <div class="order-row">
@@ -374,7 +385,13 @@
                 <div class="order-title" data-order-plan>Standard</div>
                 <div class="order-sub" data-order-plan-sub>7 days</div>
               </div>
-              <div class="order-amt" data-order-price>$49.00</div>
+
+              <div class="order-right">
+                <div class="order-amt" data-order-price>$49.00</div>
+                <button class="link-btn link-btn-tight" type="button" data-open-plan>
+                  Change
+                </button>
+              </div>
             </div>
 
             <div class="order-row order-row-muted">
@@ -411,10 +428,33 @@
 
           <div class="divider"></div>
 
-          <div class="stripe-box" aria-label="Stripe checkout placeholder">
-            <div class="stripe-badge">Powered by Stripe</div>
-            <div class="stripe-copy">
-              You’ll be redirected to a secure Stripe checkout page to complete payment.
+          <h2 class="h2">Payment</h2>
+          <p class="muted">Pay without leaving Only Used Tesla. Payments are processed securely by Stripe.</p>
+
+          <!-- If no key/backend is configured, we show this friendly placeholder. -->
+          <div class="payment-placeholder" data-payment-placeholder>
+            <div class="placeholder-title">Embedded Stripe payment form</div>
+            <div class="placeholder-sub">
+              This demo is ready for <strong>Stripe Payment Element</strong>. Your dev will:
+              <ol class="mini-list">
+                <li>Create a <code>PaymentIntent</code> on your server</li>
+                <li>Return a <code>client_secret</code> to the browser</li>
+                <li>Mount Stripe’s Payment Element here</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Real Stripe Elements mount points (only shown when configured). -->
+          <div class="payment-shell" data-payment-shell hidden>
+            <div class="wallet-row" id="express-checkout-element" hidden></div>
+
+            <div id="payment-element" class="stripe-mount"></div>
+
+            <div class="stripe-error" data-stripe-error aria-live="polite"></div>
+
+            <div class="stripe-foot">
+              <span class="stripe-badge">Powered by Stripe</span>
+              <span class="muted small">Secure payment · No card details touch your servers</span>
             </div>
           </div>
 
@@ -479,7 +519,7 @@
 
     <footer class="footer" role="contentinfo">
       <div class="footer-inner">
-        <div class="muted small">Only Used Tesla · Checkout demo UI</div>
+        <div class="muted small">Only Used Tesla · Embedded payments demo UI</div>
         <button class="link-btn" type="button" data-reset-draft>Reset demo data</button>
       </div>
     </footer>
@@ -500,17 +540,64 @@
 
       <div class="dialog-body">
         <div class="callout">
-          <div class="callout-title">Design goals for “fat finger” mobile</div>
+          <div class="callout-title">Checkout goals</div>
           <ul class="callout-list">
             <li>Big buttons (min 52px), sticky bottom CTA</li>
-            <li>1 primary action per screen</li>
-            <li>Friendly validation (green = good, clear errors)</li>
+            <li>Order summary + edit right on the payment screen</li>
+            <li>Embedded Stripe payment form (Payment Element)</li>
             <li>Passwordless by default (magic link after purchase)</li>
           </ul>
         </div>
 
         <div class="dialog-actions">
           <button class="btn btn-primary btn-block" value="ok">Got it</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Plan change dialog -->
+  <dialog class="dialog" data-plan-dialog>
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <div>
+          <div class="dialog-title">Change ad package</div>
+          <div class="muted">Pick what fits your timeline. You can upgrade any time.</div>
+        </div>
+        <button class="icon-btn" value="cancel" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="plan-grid" role="radiogroup" aria-label="Ad packages (payment screen)">
+          <button class="plan is-selected" type="button" role="radio" aria-checked="true" data-plan-dialog-choice="standard">
+            <div class="plan-top">
+              <div class="plan-name">Standard</div>
+              <div class="plan-price">$49</div>
+            </div>
+            <div class="plan-sub">7 days · Great for most sellers</div>
+          </button>
+
+          <button class="plan" type="button" role="radio" aria-checked="false" data-plan-dialog-choice="pro">
+            <div class="plan-top">
+              <div class="plan-name">Pro</div>
+              <div class="plan-price">$89</div>
+            </div>
+            <div class="plan-sub">14 days · More visibility</div>
+          </button>
+
+          <button class="plan" type="button" role="radio" aria-checked="false" data-plan-dialog-choice="max">
+            <div class="plan-top">
+              <div class="plan-name">Max</div>
+              <div class="plan-price">$149</div>
+            </div>
+            <div class="plan-sub">30 days · Best value</div>
+          </button>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="btn btn-ghost btn-block" value="cancel">Done</button>
         </div>
       </div>
     </form>
