@@ -1,26 +1,23 @@
-# Example server (Node/Express)
+# Example server (Node/Express) — v4 (Video add-on)
 
-This is a minimal example to help your backend dev implement **embedded payments** with Stripe Payment Element.
+This is a minimal example for embedded payments:
 
-## 1) Install
+- Create PaymentIntent for plan (+ optional video add-on)
+- Update PaymentIntent amount if plan or video add-on changes
+
+## Install
 ```bash
 cd server
 npm install
 ```
 
-## 2) Set env vars
-Copy `.env.example` to `.env` and add your keys.
+## Configure
+Copy `.env.example` to `.env` and set your Stripe secret key.
 
-## 3) Run
+## Run
 ```bash
 npm run dev
 ```
 
-Server runs on http://localhost:4242
-
-## Endpoints
-
-- POST `/api/create-payment-intent`
-- POST `/api/update-payment-intent`
-
-In production you should also implement webhooks (e.g. `payment_intent.succeeded`) to reliably mark the ad as paid and queue it for review.
+## Webhooks (recommended in production)
+Use `payment_intent.succeeded` to reliably mark an ad as paid and queue it for review.

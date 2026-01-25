@@ -1,11 +1,11 @@
 /**
- * Only Used Tesla — Embedded Payments Demo Server
+ * Only Used Tesla — Embedded Payments Demo Server (v4)
  *
- * This server demonstrates the Stripe pieces your backend dev needs:
- * - Create a PaymentIntent for the selected ad package (server calculates amount)
- * - Update the PaymentIntent amount when the package changes
+ * Adds an optional "videoAddon" that affects the payment amount.
  *
- * IMPORTANT: Never trust totals from the browser. Always look up prices server-side.
+ * IMPORTANT:
+ * - Never trust totals from the browser. Always compute amounts server-side.
+ * - In production, implement Stripe webhooks to fulfill the order reliably.
  */
 
 const express = require("express");
@@ -22,32 +22,38 @@ app.use(express.json());
 const ORIGIN = process.env.CORS_ORIGIN || "*";
 app.use(cors({ origin: ORIGIN }));
 
-// Simple server-side price table (replace with DB / Stripe Prices later)
 const PLANS = {
   standard: { name: "Standard", amount: 4900, currency: "usd" },
   pro: { name: "Pro", amount: 8900, currency: "usd" },
   max: { name: "Max", amount: 14900, currency: "usd" },
 };
 
+const VIDEO_ADDON = { name: "Video showcase", amount: 1900 };
+
+function computeTotalAmount({ plan, videoAddon }) {
+  const p = PLANS[plan];
+  if (!p) throw new Error("Invalid plan");
+
+  let amount = p.amount;
+  if (videoAddon) amount += VIDEO_ADDON.amount;
+  return { amount, currency: p.currency };
+}
+
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 /**
  * Create PaymentIntent
- * Body: { plan: "standard"|"pro"|"max", email, listing: { vin, model, year, zip, state } }
+ * Body: { plan, videoAddon, email, listing }
  * Returns: { clientSecret, paymentIntentId }
  */
 app.post("/api/create-payment-intent", async (req, res) => {
   try {
-    const { plan, email, listing } = req.body || {};
-    const selected = PLANS[plan];
+    const { plan, videoAddon, email, listing } = req.body || {};
+    const { amount, currency } = computeTotalAmount({ plan, videoAddon: Boolean(videoAddon) });
 
-    if (!selected) {
-      return res.status(400).json({ error: "Invalid plan" });
-    }
-
-    // Put what you need for fulfillment & support into metadata (keep it small).
     const metadata = {
-      plan,
+      plan: String(plan),
+      videoAddon: String(Boolean(videoAddon)),
       listing_vin: listing?.vin || "",
       listing_model: listing?.model || "",
       listing_year: listing?.year || "",
@@ -57,8 +63,8 @@ app.post("/api/create-payment-intent", async (req, res) => {
     };
 
     const intent = await stripe.paymentIntents.create({
-      amount: selected.amount,
-      currency: selected.currency,
+      amount,
+      currency,
       automatic_payment_methods: { enabled: true },
       metadata,
     });
@@ -74,20 +80,22 @@ app.post("/api/create-payment-intent", async (req, res) => {
 
 /**
  * Update PaymentIntent amount
- * Body: { paymentIntentId, plan }
+ * Body: { paymentIntentId, plan, videoAddon }
  * Returns: { ok: true }
  */
 app.post("/api/update-payment-intent", async (req, res) => {
   try {
-    const { paymentIntentId, plan } = req.body || {};
-    const selected = PLANS[plan];
-
+    const { paymentIntentId, plan, videoAddon } = req.body || {};
     if (!paymentIntentId) return res.status(400).json({ error: "Missing paymentIntentId" });
-    if (!selected) return res.status(400).json({ error: "Invalid plan" });
+
+    const { amount } = computeTotalAmount({ plan, videoAddon: Boolean(videoAddon) });
 
     await stripe.paymentIntents.update(paymentIntentId, {
-      amount: selected.amount,
-      metadata: { plan },
+      amount,
+      metadata: {
+        plan: String(plan),
+        videoAddon: String(Boolean(videoAddon)),
+      },
     });
 
     return res.json({ ok: true });

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <title>Only Used Tesla — Ad Checkout Demo (Embedded Payments)</title>
+  <title>Only Used Tesla — Ad Checkout Demo (Video + Embedded Payments)</title>
   <link rel="stylesheet" href="styles.css" />
 
   <!-- Stripe.js (only used when you provide a publishable key + backend endpoints) -->
@@ -31,7 +31,7 @@
         <div class="brand-mark" aria-hidden="true">T</div>
         <div class="brand-text">
           <div class="brand-name">Only Used Tesla</div>
-          <div class="brand-sub">Embedded payments demo (mobile)</div>
+          <div class="brand-sub">Video + embedded payments demo (mobile)</div>
         </div>
       </div>
 
@@ -132,16 +132,83 @@
         </div>
 
         <div class="card">
-          <h2 class="h2">Photos (optional)</h2>
-          <p class="muted">Add photos later — your ad can still run with a great summary.</p>
+          <div class="media-head">
+            <div>
+              <h2 class="h2">Media (optional)</h2>
+              <p class="muted">Photos help. Video helps even more — and you can add it later.</p>
+            </div>
+            <div class="media-counts muted">
+              Photos: <strong data-photo-count>0</strong>/20 · Videos: <strong data-video-count>0</strong>/1
+            </div>
+          </div>
 
-          <label class="upload">
-            <input type="file" accept="image/*" multiple />
-            <span class="upload-box" role="button" tabindex="0">
-              <span class="upload-title">Add photos</span>
-              <span class="upload-sub">Tap to choose from your phone</span>
-            </span>
-          </label>
+          <div class="segmented segmented-mini" role="tablist" aria-label="Media tabs">
+            <button class="seg-btn is-selected" type="button" role="tab" aria-selected="true" data-media-tab="photos">Photos</button>
+            <button class="seg-btn" type="button" role="tab" aria-selected="false" data-media-tab="video">Video (1 min)</button>
+          </div>
+
+          <!-- Photos tab -->
+          <div class="tab-panel is-active" role="tabpanel" data-media-panel="photos">
+            <label class="upload">
+              <input type="file" accept="image/*" multiple data-photos />
+              <span class="upload-box" role="button" tabindex="0">
+                <span class="upload-title">Add photos</span>
+                <span class="upload-sub">Tap to choose from your phone</span>
+              </span>
+            </label>
+            <div class="field-hint">
+              Tip: 8–12 photos performs great (front, back, wheels, interior, screen, trunk).
+            </div>
+          </div>
+
+          <!-- Video tab -->
+          <div class="tab-panel" role="tabpanel" data-media-panel="video">
+            <div class="callout soft">
+              <div class="callout-title">Best results</div>
+              <ul class="callout-list">
+                <li>Walk around once (a simple 360°), keep the car centered</li>
+                <li>Landscape works best · steady hands · good lighting</li>
+                <li>Keep it under <strong>60 seconds</strong> so it loads fast</li>
+              </ul>
+            </div>
+
+            <div class="toggle-row">
+              <div>
+                <div class="row-title">Video showcase (HD, up to 1 minute)</div>
+                <div class="row-sub">Adds processing + hosting. <strong>+$19</strong></div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-field="videoAddon" />
+                <span class="switch-ui" aria-hidden="true"></span>
+                <span class="sr-only">Video showcase add-on</span>
+              </label>
+            </div>
+
+            <div class="video-uploader" data-video-uploader>
+              <label class="upload">
+                <input type="file" accept="video/*" capture="environment" data-video />
+                <span class="upload-box upload-box-video" role="button" tabindex="0">
+                  <span class="upload-title">Add video</span>
+                  <span class="upload-sub">Record or choose a video (1 minute max)</span>
+                </span>
+              </label>
+
+              <div class="video-msg" data-video-msg aria-live="polite"></div>
+
+              <div class="video-preview" data-video-preview hidden>
+                <video class="video-player" controls playsinline></video>
+                <div class="video-meta muted small" data-video-meta>—</div>
+                <div class="btn-row">
+                  <button class="btn btn-ghost btn-block" type="button" data-video-replace>Replace video</button>
+                  <button class="btn btn-ghost btn-block" type="button" data-video-remove>Remove video</button>
+                </div>
+              </div>
+
+              <div class="field-hint">
+                If you’d rather upload later, that’s totally fine — keep going and we’ll save your progress.
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="card">
@@ -301,6 +368,7 @@
             <div class="ad-preview-meta">
               <span class="meta-pill" data-ad-vin>VIN —</span>
               <span class="meta-pill" data-ad-ap>Autopilot —</span>
+              <span class="meta-pill" data-ad-video>Video —</span>
             </div>
           </div>
 
@@ -394,6 +462,22 @@
               </div>
             </div>
 
+            <div class="order-row" data-video-line hidden>
+              <div>
+                <div class="order-title">Video showcase</div>
+                <div class="order-sub">HD processing + hosting (up to 1 min)</div>
+              </div>
+
+              <div class="order-right">
+                <div class="order-amt" data-video-price>$19.00</div>
+                <label class="switch">
+                  <input type="checkbox" data-field="videoAddon" />
+                  <span class="switch-ui" aria-hidden="true"></span>
+                  <span class="sr-only">Video showcase add-on</span>
+                </label>
+              </div>
+            </div>
+
             <div class="order-row order-row-muted">
               <div>Estimated tax</div>
               <div data-order-tax>$0.00</div>
@@ -402,6 +486,12 @@
             <div class="order-row order-total">
               <div>Total</div>
               <div data-order-total>$49.00</div>
+            </div>
+
+            <div class="inline-actions">
+              <button class="btn btn-ghost btn-block" type="button" data-edit-media>
+                Edit photos / video
+              </button>
             </div>
           </div>
 
@@ -431,7 +521,6 @@
           <h2 class="h2">Payment</h2>
           <p class="muted">Pay without leaving Only Used Tesla. Payments are processed securely by Stripe.</p>
 
-          <!-- If no key/backend is configured, we show this friendly placeholder. -->
           <div class="payment-placeholder" data-payment-placeholder>
             <div class="placeholder-title">Embedded Stripe payment form</div>
             <div class="placeholder-sub">
@@ -444,14 +533,10 @@
             </div>
           </div>
 
-          <!-- Real Stripe Elements mount points (only shown when configured). -->
           <div class="payment-shell" data-payment-shell hidden>
             <div class="wallet-row" id="express-checkout-element" hidden></div>
-
             <div id="payment-element" class="stripe-mount"></div>
-
             <div class="stripe-error" data-stripe-error aria-live="polite"></div>
-
             <div class="stripe-foot">
               <span class="stripe-badge">Powered by Stripe</span>
               <span class="muted small">Secure payment · No card details touch your servers</span>
@@ -519,7 +604,7 @@
 
     <footer class="footer" role="contentinfo">
       <div class="footer-inner">
-        <div class="muted small">Only Used Tesla · Embedded payments demo UI</div>
+        <div class="muted small">Only Used Tesla · Video + embedded payments demo UI</div>
         <button class="link-btn" type="button" data-reset-draft>Reset demo data</button>
       </div>
     </footer>
@@ -544,8 +629,8 @@
           <ul class="callout-list">
             <li>Big buttons (min 52px), sticky bottom CTA</li>
             <li>Order summary + edit right on the payment screen</li>
+            <li>Optional 1-minute HD video add-on (+$19)</li>
             <li>Embedded Stripe payment form (Payment Element)</li>
-            <li>Passwordless by default (magic link after purchase)</li>
           </ul>
         </div>
 

@@ -1,25 +1,25 @@
 /**
- * Only Used Tesla — Checkout Demo (Embedded Payments)
- * ---------------------------------------------------
- * This is a UI prototype that shows how embedded Stripe payments would look.
+ * Only Used Tesla — Demo v4 (Video + Embedded Payments)
+ * ----------------------------------------------------
+ * Adds:
+ * - Media tabs: Photos / Video (1 minute)
+ * - Optional video add-on (+$19) that updates the order total
+ * - Video file validation: duration <= 60s, size <= 200MB (adjustable)
  *
- * Stripe product recommended for this UX:
- * - Stripe Elements (Payment Element) + PaymentIntents API (server)
- *
- * What this demo does:
- * - Builds the order summary UI and allows editing the package on the payment screen.
- * - If you provide a Stripe publishable key + backend endpoints, it will mount Payment Element.
- *
- * Back-end endpoints expected (examples included in /server):
- * - POST /api/create-payment-intent  -> { clientSecret, paymentIntentId }
- * - POST /api/update-payment-intent  -> { ok }
+ * Stripe:
+ * - Still uses Payment Element scaffolding from v3
+ * - PaymentIntent create/update now includes `videoAddon`
  */
 
 (function () {
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const STORAGE_KEY = "out_checkout_demo_v3";
+  const STORAGE_KEY = "out_checkout_demo_v4";
+
+  const VIDEO_ADDON = { name: "Video showcase", price: 19, amount: 1900 };
+  const VIDEO_MAX_SECONDS = 60;
+  const VIDEO_MAX_BYTES = 200 * 1024 * 1024; // 200MB
 
   const plans = {
     standard: { name: "Standard", days: 7, price: 49, amount: 4900 },
@@ -30,6 +30,12 @@
   const state = {
     step: 1,
     listingType: "sell",
+    mediaTab: "photos",
+    media: {
+      photoCount: 0,
+      hasVideo: false,
+      videoMeta: null,
+    },
     fields: {
       listOnSite: true,
       boostWithAd: true,
@@ -46,13 +52,14 @@
       summary: "",
 
       plan: "standard",
+      videoAddon: false,
 
       email: "",
       magicLink: true,
     },
   };
 
-  // Stripe runtime state (only used if configured)
+  // Stripe runtime state
   let stripe = null;
   let elements = null;
   let paymentElement = null;
@@ -70,6 +77,8 @@
       if (saved && typeof saved === "object") {
         state.step = saved.step ?? state.step;
         state.listingType = saved.listingType ?? state.listingType;
+        state.mediaTab = saved.mediaTab ?? state.mediaTab;
+        state.media = { ...state.media, ...(saved.media || {}) };
         state.fields = { ...state.fields, ...(saved.fields || {}) };
       }
     } catch (e) {}
@@ -121,14 +130,15 @@
     });
 
     updateSummaryCounter();
+    updateMediaCounts();
     updateAdPreview();
     updateOrder();
     updatePlanDialogSelection();
+    updateMediaTabUI();
 
     save(false);
     window.scrollTo({ top: 0, behavior: "instant" });
 
-    // If we land on step 4, attempt to mount Stripe Payment Element (if configured)
     if (state.step === 4) {
       ensureStripeMounted().catch(() => {});
     }
@@ -195,35 +205,28 @@
     if (step === 2) {
       const f = state.fields;
 
-      // VIN required
       const vin = normalizeVin(f.vin);
       if (!vin) { ok = false; setFieldState("vin", false, "Please enter your VIN (17 characters)."); }
       else if (vin.length !== 17) { ok = false; setFieldState("vin", false, "VINs are 17 characters — almost there."); }
       else if (!isVinValid(vin)) { ok = false; setFieldState("vin", false, "That VIN doesn’t look right. VINs don’t use the letters I, O, or Q."); }
       else { setFieldState("vin", true, ""); }
 
-      // Required: model
       if (!String(f.model).trim()) { ok = false; setFieldState("model", false, "Please choose a model."); }
       else setFieldState("model", true, "");
 
-      // Required: year
       if (!String(f.year).trim()) { ok = false; setFieldState("year", false, "Please choose a year."); }
       else setFieldState("year", true, "");
 
-      // Required: price
       if (!String(f.price).trim() || Number(f.price) <= 0) { ok = false; setFieldState("price", false, "Please add a price (numbers only)."); }
       else setFieldState("price", true, "");
 
-      // Required: zip
       const zip = String(f.zip).trim();
       if (!zip || zip.length < 5) { ok = false; setFieldState("zip", false, "Please enter a valid ZIP code."); }
       else setFieldState("zip", true, "");
 
-      // Required: state
       if (!String(f.state).trim()) { ok = false; setFieldState("state", false, "Please choose a state."); }
       else setFieldState("state", true, "");
 
-      // Required: summary (min 50 chars)
       const summary = String(f.summary || "");
       if (summary.trim().length < 50) { ok = false; setFieldState("summary", false, "Add a bit more detail — at least 50 characters."); }
       else if (summary.length > 500) { ok = false; setFieldState("summary", false, "Please keep the summary under 500 characters."); }
@@ -237,6 +240,37 @@
     }
 
     return ok;
+  }
+
+  // ----------- Media tabs -----------
+  function setMediaTab(tab) {
+    state.mediaTab = tab;
+    updateMediaTabUI();
+    save(false);
+  }
+
+  function updateMediaTabUI() {
+    $$("[data-media-tab]").forEach((btn) => {
+      const isActive = btn.dataset.mediaTab === state.mediaTab;
+      btn.classList.toggle("is-selected", isActive);
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    $$("[data-media-panel]").forEach((panel) => {
+      const isActive = panel.dataset.mediaPanel === state.mediaTab;
+      panel.classList.toggle("is-active", isActive);
+    });
+  }
+
+  function updateMediaCounts() {
+    const photoCountEl = $("[data-photo-count]");
+    const videoCountEl = $("[data-video-count]");
+    if (photoCountEl) photoCountEl.textContent = String(state.media.photoCount || 0);
+    if (videoCountEl) videoCountEl.textContent = state.media.hasVideo ? "1" : "0";
+
+    // Payment screen video line
+    const videoLine = $("[data-video-line]");
+    if (videoLine) videoLine.hidden = !state.fields.videoAddon;
   }
 
   // ----------- UI updates -----------
@@ -273,16 +307,26 @@
     const bodyEl = $("[data-ad-body]");
     const vinEl = $("[data-ad-vin]");
     const apEl = $("[data-ad-ap]");
+    const videoEl = $("[data-ad-video]");
 
     if (titleEl) titleEl.textContent = title;
     if (subEl) subEl.textContent = sub;
     if (bodyEl) bodyEl.textContent = body;
     if (vinEl) vinEl.textContent = maskedVinForPreview(f.vin);
     if (apEl) apEl.textContent = f.autopilot ? "Autopilot On" : "Autopilot Off";
+    if (videoEl) videoEl.textContent = f.videoAddon ? "Video Included" : "No Video";
+  }
+
+  function calcTotalCents() {
+    const plan = plans[state.fields.plan] || plans.standard;
+    let total = plan.amount;
+    if (state.fields.videoAddon) total += VIDEO_ADDON.amount;
+    return total;
   }
 
   function updateOrder() {
     const plan = plans[state.fields.plan] || plans.standard;
+    const totalCents = calcTotalCents();
 
     const planEl = $("[data-order-plan]");
     const planSubEl = $("[data-order-plan-sub]");
@@ -294,14 +338,18 @@
     if (planEl) planEl.textContent = plan.name;
     if (planSubEl) planSubEl.textContent = `${plan.days} days`;
     if (priceEl) priceEl.textContent = `$${plan.price.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `$${plan.price.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `$${(totalCents / 100).toFixed(2)}`;
     if (receiptPlanEl) receiptPlanEl.textContent = plan.name;
-    if (receiptTotalEl) receiptTotalEl.textContent = `$${plan.price.toFixed(2)}`;
+    if (receiptTotalEl) receiptTotalEl.textContent = `$${(totalCents / 100).toFixed(2)}`;
 
-    // Update pay button label (optional clarity)
+    // Video line price
+    const videoPriceEl = $("[data-video-price]");
+    if (videoPriceEl) videoPriceEl.textContent = `$${VIDEO_ADDON.price.toFixed(2)}`;
+
+    // Pay button label
     const payBtn = $("[data-pay]");
     if (payBtn && state.step === 4) {
-      payBtn.textContent = `Pay $${plan.price.toFixed(0)} & submit for review`;
+      payBtn.textContent = `Pay $${Math.round(totalCents / 100)} & submit for review`;
     }
   }
 
@@ -319,7 +367,6 @@
     if (!plans[planKey]) return;
     state.fields.plan = planKey;
 
-    // Step 3 package cards
     $$("[data-plan]").forEach((btn) => {
       const selected = btn.dataset.plan === planKey;
       btn.classList.toggle("is-selected", selected);
@@ -339,7 +386,117 @@
     });
   }
 
-  // ----------- Embedded Stripe (Payment Element) scaffolding -----------
+  // ----------- Video handling -----------
+  function setVideoMessage(msg, isError = false) {
+    const el = $("[data-video-msg]");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function showVideoPreview(file, durationSec) {
+    const previewWrap = $("[data-video-preview]");
+    const player = $(".video-player", previewWrap);
+    const meta = $("[data-video-meta]");
+    if (!previewWrap || !player) return;
+
+    const url = URL.createObjectURL(file);
+    player.src = url;
+
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    const dur = Math.round(durationSec);
+    const name = file.name || "video.mov";
+    if (meta) meta.textContent = `${name} · ${dur}s · ${sizeMb}MB`;
+
+    previewWrap.hidden = false;
+    setVideoMessage("Video added. Nice — this tends to boost interest.", false);
+  }
+
+  function clearVideo() {
+    state.media.hasVideo = false;
+    state.media.videoMeta = null;
+    state.fields.videoAddon = false;
+
+    const input = $("[data-video]");
+    if (input) input.value = "";
+
+    const previewWrap = $("[data-video-preview]");
+    if (previewWrap) {
+      const player = $(".video-player", previewWrap);
+      if (player) {
+        try { URL.revokeObjectURL(player.src); } catch (e) {}
+        player.removeAttribute("src");
+        player.load();
+      }
+      previewWrap.hidden = true;
+    }
+
+    setVideoMessage("", false);
+    updateMediaCounts();
+    updateAdPreview();
+    updateOrder();
+    syncVideoAddonCheckboxes();
+    save(true);
+  }
+
+  function syncVideoAddonCheckboxes() {
+    $$('[data-field="videoAddon"]').forEach((cb) => {
+      cb.checked = Boolean(state.fields.videoAddon);
+    });
+
+    const videoLine = $("[data-video-line]");
+    if (videoLine) videoLine.hidden = !state.fields.videoAddon;
+  }
+
+  async function validateAndSetVideoFile(file) {
+    if (!file) return;
+
+    // Size check
+    if (file.size > VIDEO_MAX_BYTES) {
+      setVideoMessage("That file is a bit large. Please keep it under 200MB (shorter videos load faster).", true);
+      return;
+    }
+
+    // Duration check: read metadata via a temporary video element
+    const temp = document.createElement("video");
+    temp.preload = "metadata";
+
+    const url = URL.createObjectURL(file);
+    temp.src = url;
+
+    await new Promise((resolve) => {
+      temp.onloadedmetadata = () => resolve();
+      temp.onerror = () => resolve();
+    });
+
+    const duration = Number(temp.duration || 0);
+    try { URL.revokeObjectURL(url); } catch (e) {}
+
+    if (!duration || !isFinite(duration)) {
+      setVideoMessage("We couldn’t read that video. Please try another file.", true);
+      return;
+    }
+
+    if (duration > VIDEO_MAX_SECONDS + 0.5) {
+      setVideoMessage("Please keep the video under 60 seconds. Quick walk‑arounds work best.", true);
+      return;
+    }
+
+    // Success: store meta + enable add-on
+    state.media.hasVideo = true;
+    state.media.videoMeta = { name: file.name, size: file.size, duration };
+
+    state.fields.videoAddon = true; // uploading implies hosting/processing
+    syncVideoAddonCheckboxes();
+
+    showVideoPreview(file, duration);
+    updateMediaCounts();
+    updateAdPreview();
+    updateOrder();
+    save(true);
+  }
+
+  // ----------- Embedded Stripe scaffolding -----------
   function apiBase() {
     return (window.ONLYUSEDTESLA_API_BASE || "").replace(/\/$/, "");
   }
@@ -357,7 +514,6 @@
     const placeholder = $("[data-payment-placeholder]");
     const shell = $("[data-payment-shell]");
     if (!placeholder || !shell) return;
-
     placeholder.hidden = Boolean(showReal);
     shell.hidden = !Boolean(showReal);
   }
@@ -370,17 +526,17 @@
       year: String(f.year || ""),
       zip: String(f.zip || ""),
       state: String(f.state || ""),
+      videoAddon: Boolean(f.videoAddon),
     };
   }
 
-  async function createPaymentIntent(planKey) {
-    const plan = plans[planKey] || plans.standard;
-
+  async function createPaymentIntent() {
     const res = await fetch(`${apiBase()}/api/create-payment-intent`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        plan: planKey,
+        plan: state.fields.plan,
+        videoAddon: Boolean(state.fields.videoAddon),
         email: String(state.fields.email || "").trim(),
         listing: listingSnapshotForMetadata(),
       }),
@@ -396,7 +552,7 @@
     return data;
   }
 
-  async function updatePaymentIntent(planKey) {
+  async function updatePaymentIntent() {
     if (!paymentIntentId) return;
 
     const res = await fetch(`${apiBase()}/api/update-payment-intent`, {
@@ -404,7 +560,8 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         paymentIntentId,
-        plan: planKey,
+        plan: state.fields.plan,
+        videoAddon: Boolean(state.fields.videoAddon),
       }),
     });
 
@@ -417,15 +574,10 @@
   }
 
   async function ensureStripeMounted() {
-    // Only mount once per session (unless you rebuild it)
     if (stripeMounted) return;
 
     const pk = stripePk();
-    if (!pk) {
-      // Not configured: stay in placeholder mode
-      showPaymentShell(false);
-      return;
-    }
+    if (!pk) { showPaymentShell(false); return; }
 
     if (!window.Stripe) {
       showPaymentShell(false);
@@ -437,12 +589,10 @@
       showPaymentShell(true);
       setStripeError("");
 
-      // Create a PaymentIntent (server-side) and get the client secret.
-      const created = await createPaymentIntent(state.fields.plan);
+      const created = await createPaymentIntent();
       paymentIntentId = created.paymentIntentId || null;
       clientSecret = created.clientSecret;
 
-      // Initialize Stripe.js + Elements
       stripe = window.Stripe(pk);
       const appearance = {
         theme: "stripe",
@@ -461,26 +611,18 @@
       stripeReady = true;
       stripeMounted = true;
     } catch (err) {
-      // Fall back to placeholder with a clear message
       stripeReady = false;
       stripeMounted = false;
       showPaymentShell(false);
-      setStripeError("");
       console.warn(err);
     }
   }
 
-  async function refreshStripeAmountAfterPlanChange(planKey) {
+  async function refreshStripeAmountAfterOrderChange() {
     if (!stripeReady || !elements) return;
-
     try {
       setStripeError("");
-
-      // Update PaymentIntent amount server-side (don’t trust client totals).
-      await updatePaymentIntent(planKey);
-
-      // If you update the PaymentIntent, fetch updates so Elements reflects server state.
-      // See Stripe docs: elements.fetchUpdates()
+      await updatePaymentIntent();
       await elements.fetchUpdates();
     } catch (err) {
       console.warn(err);
@@ -489,7 +631,6 @@
   }
 
   async function payWithStripeIfConfigured() {
-    // If Stripe isn't configured, we simulate a successful payment for demo purposes.
     if (!stripeReady || !stripe || !elements || !clientSecret) {
       await simulatePayment();
       return;
@@ -497,12 +638,9 @@
 
     setStripeError("");
 
-    // Confirm payment. Some payment methods may redirect for authentication.
-    // For card payments, this typically completes inline.
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // In production, use a dedicated success URL that can restore state.
         return_url: window.location.href.split("?")[0] + "?success=1",
       },
       redirect: "if_required",
@@ -513,7 +651,6 @@
       return;
     }
 
-    // If no redirect happened, you can optionally retrieve the intent to verify status.
     try {
       const result = await stripe.retrievePaymentIntent(clientSecret);
       const pi = result && result.paymentIntent;
@@ -522,10 +659,8 @@
         stampReference();
         return;
       }
-      // If requires_action etc, Stripe may have handled it. If still not succeeded, show a gentle note.
       setStripeError("Almost there — please follow any additional steps to complete payment.");
     } catch (e) {
-      // If retrieval fails, still allow UI progression in demo.
       setStep(5);
       stampReference();
     }
@@ -571,11 +706,76 @@
       setStep(state.step - 1);
     });
 
+    // Help dialog
+    const helpDialog = $("[data-help-dialog]");
+    $("[data-help]").addEventListener("click", () => {
+      if (!helpDialog.open) helpDialog.showModal();
+    });
+
+    // Reset demo data
+    $("[data-reset-draft]").addEventListener("click", resetDraft);
+
+    // Listing type
+    $$("[data-choice]").forEach((btn) => {
+      btn.addEventListener("click", () => setListingType(btn.dataset.choice));
+    });
+
+    // Media tabs
+    $$("[data-media-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => setMediaTab(btn.dataset.mediaTab));
+    });
+
+    // Photos input (just counts in demo)
+    const photosInput = $("[data-photos]");
+    if (photosInput) {
+      photosInput.addEventListener("change", () => {
+        const files = photosInput.files ? Array.from(photosInput.files) : [];
+        state.media.photoCount = Math.min(20, files.length);
+        updateMediaCounts();
+        save(true);
+      });
+    }
+
+    // Video input
+    const videoInput = $("[data-video]");
+    if (videoInput) {
+      videoInput.addEventListener("change", async () => {
+        const file = (videoInput.files && videoInput.files[0]) ? videoInput.files[0] : null;
+        if (!file) return;
+        setVideoMessage("Checking video…", false);
+        await validateAndSetVideoFile(file);
+      });
+    }
+
+    // Replace video
+    const replaceBtn = $("[data-video-replace]");
+    if (replaceBtn && videoInput) {
+      replaceBtn.addEventListener("click", () => videoInput.click());
+    }
+
+    // Remove video
+    const removeBtn = $("[data-video-remove]");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", clearVideo);
+    }
+
+    // Plan selection (Step 3)
+    $$("[data-plan]").forEach((btn) => {
+      btn.addEventListener("click", () => setPlan(btn.dataset.plan));
+    });
+
     // Edit details from preview
     const editBtn = $("[data-edit-details]");
     if (editBtn) editBtn.addEventListener("click", () => setStep(2));
 
-    // Open plan dialog from payment screen
+    // Payment screen "edit media"
+    const editMediaBtn = $("[data-edit-media]");
+    if (editMediaBtn) editMediaBtn.addEventListener("click", () => {
+      setStep(2);
+      setMediaTab("video");
+    });
+
+    // Plan change dialog
     const planDialog = $("[data-plan-dialog]");
     const openPlanBtn = $("[data-open-plan]");
     if (openPlanBtn && planDialog) {
@@ -584,16 +784,11 @@
       });
     }
 
-    // Plan dialog choices
     $$("[data-plan-dialog-choice]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const planKey = btn.dataset.planDialogChoice;
         setPlan(planKey);
-
-        // If Stripe is mounted, update server total and fetch updates.
-        await refreshStripeAmountAfterPlanChange(planKey);
-
-        // Close the dialog (it’s a form method=dialog)
+        await refreshStripeAmountAfterOrderChange();
         if (planDialog && planDialog.open) planDialog.close();
       });
     });
@@ -611,46 +806,23 @@
       window.location.reload();
     });
 
-    // Demo dashboard button
+    // Demo dashboard
     $("[data-view-dashboard]").addEventListener("click", () => {
-      alert("Next build step: Manage your ad.\n\n- View status (Queued, Live, Expiring)\n- Pause / Renew\n- Edit summary & photos\n- Performance reporting");
-    });
-
-    // Help dialog
-    const helpDialog = $("[data-help-dialog]");
-    $("[data-help]").addEventListener("click", () => {
-      if (!helpDialog.open) helpDialog.showModal();
-    });
-
-    // Reset demo data
-    $("[data-reset-draft]").addEventListener("click", resetDraft);
-
-    // Listing type
-    $$("[data-choice]").forEach((btn) => {
-      btn.addEventListener("click", () => setListingType(btn.dataset.choice));
-    });
-
-    // Plan selection (Step 3)
-    $$("[data-plan]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const planKey = btn.dataset.plan;
-        setPlan(planKey);
-      });
+      alert("Next build step: Manage your ad.\n\n- Upload/replace video\n- Pause/renew\n- Reporting");
     });
 
     // Inputs (generic)
     $$("[data-field]").forEach((el) => {
       const key = el.dataset.field;
 
-      // Initialize values from state into the DOM
-      if (el.type === "checkbox") {
-        el.checked = Boolean(state.fields[key]);
-      } else {
+      // Initialize DOM from state
+      if (el.type === "checkbox") el.checked = Boolean(state.fields[key]);
+      else {
         if (key === "vin") el.value = formatVinDisplay(state.fields.vin);
         else el.value = state.fields[key] ?? "";
       }
 
-      const handler = () => {
+      const handler = async () => {
         if (el.type === "checkbox") {
           state.fields[key] = el.checked;
         } else {
@@ -663,6 +835,7 @@
           }
         }
 
+        // Summary validation
         if (key === "summary") {
           updateSummaryCounter();
           const good = String(state.fields.summary || "").trim().length >= 50 && String(state.fields.summary || "").length <= 500;
@@ -689,23 +862,45 @@
           }
         }
 
-        // Soft validations for selects/required fields
-        if (["model","year","price","zip","state"].includes(key)) {
-          const wrap = $(`[data-validate="${key}"]`);
-          if (!wrap) return;
+        // Video add-on checkbox behavior
+        if (key === "videoAddon") {
+          // If turning OFF, remove video (keeps UX consistent: if you’re not paying for it, we won’t store it)
+          if (!state.fields.videoAddon) {
+            clearVideo();
+          } else {
+            // If turning ON without a video, that’s OK — user can upload later.
+            syncVideoAddonCheckboxes();
+            updateMediaCounts();
+            updateAdPreview();
+            updateOrder();
+            save(true);
+          }
 
-          const val = String(state.fields[key] || "").trim();
-          if (!val) wrap.classList.remove("is-valid", "is-invalid");
-          else {
-            wrap.classList.add("is-valid");
-            wrap.classList.remove("is-invalid");
-            const msgEl = $("[data-msg]", wrap);
-            if (msgEl) msgEl.textContent = "";
+          // If on payment screen with Stripe mounted, update amount
+          if (state.step === 4) {
+            await refreshStripeAmountAfterOrderChange();
           }
         }
 
+        // Soft validations for selects/required fields
+        if (["model","year","price","zip","state"].includes(key)) {
+          const wrap = $(`[data-validate="${key}"]`);
+          if (wrap) {
+            const val = String(state.fields[key] || "").trim();
+            if (!val) wrap.classList.remove("is-valid", "is-invalid");
+            else {
+              wrap.classList.add("is-valid");
+              wrap.classList.remove("is-invalid");
+              const msgEl = $("[data-msg]", wrap);
+              if (msgEl) msgEl.textContent = "";
+            }
+          }
+        }
+
+        updateMediaCounts();
         updateAdPreview();
         updateOrder();
+        syncVideoAddonCheckboxes();
 
         // Draft save feedback
         const status = $("[data-draft-status]");
@@ -734,22 +929,19 @@
   // ----------- Init -----------
   load();
 
-  // If returning from Stripe (success), jump to publish step.
   const params = new URLSearchParams(window.location.search);
-  if (params.get("success") === "1") {
-    state.step = 5;
-  }
+  if (params.get("success") === "1") state.step = 5;
 
-  // Initialize listing type UI
   setListingType(state.listingType);
-
-  // Initialize plan selection UI
   setPlan(state.fields.plan);
 
   updateSummaryCounter();
+  updateMediaCounts();
+  updateMediaTabUI();
   updateAdPreview();
   updateOrder();
   updatePlanDialogSelection();
+  syncVideoAddonCheckboxes();
 
   wire();
   setStep(state.step);
