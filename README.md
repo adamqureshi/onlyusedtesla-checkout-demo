@@ -27,3 +27,7 @@ This demo includes scaffolding for:
 - VIN validation: 17 chars, excludes I/O/Q
 - Video validation: <= 60 seconds, <= 200MB (adjustable in `app.js`)
 - OTP is a demo flow: code is shown in a toast as **123456**
+
+
+## Listing attribute
+- **Full Self‑Driving (FSD)**: Not included / Subscription / Paid upfront (stays with car)

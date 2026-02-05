@@ -307,6 +307,23 @@
 
           <div class="divider"></div>
 
+          <div class="fsd-block">
+            <h2 class="h2">Full Self‑Driving (FSD)</h2>
+            <p class="muted small">Buyers care whether FSD stays with the car. Choose what applies.</p>
+
+            <div class="segmented segmented-3" role="radiogroup" aria-label="Full Self-Driving">
+              <button class="seg-btn is-selected" type="button" role="radio" aria-checked="true" data-fsd="none">Not included</button>
+              <button class="seg-btn" type="button" role="radio" aria-checked="false" data-fsd="subscription">Subscription</button>
+              <button class="seg-btn" type="button" role="radio" aria-checked="false" data-fsd="included">Paid upfront</button>
+            </div>
+
+            <div class="field-hint" data-fsd-hint>
+              Choose “Paid upfront” only if FSD stays with the Tesla when it’s sold.
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
           <div class="field field-wide" data-validate="summary">
             <label for="summary">Summary <span class="req">*</span></label>
             <textarea id="summary" rows="6" data-field="summary" placeholder="What makes your Tesla stand out? (battery, wheels, FSD, service history, clean title, etc.)"></textarea>
@@ -677,6 +694,7 @@
           <ul class="callout-list">
             <li>Big buttons (fat‑finger friendly)</li>
             <li>VIN validation + friendly messaging</li>
+            <li>FSD selection: Not included / Subscription / Paid upfront</li>
             <li>Optional video, history report, Facebook posting</li>
             <li>SMS notifications with OTP verification</li>
             <li>Embedded Stripe payment form (Payment Element)</li>

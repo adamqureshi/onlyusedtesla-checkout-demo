@@ -57,6 +57,7 @@
       zip: "",
       state: "",
       autopilot: false,
+      fsd: "none", // none | subscription | included
       summary: "",
 
       history: "none", // none | autocheck | carfax
@@ -381,7 +382,34 @@
     save(false);
   }
 
-  function updateNotifyUI() {
+  
+  function setFsd(value) {
+    if (!["none", "subscription", "included"].includes(value)) return;
+    state.fields.fsd = value;
+    updateFsdUI();
+    save(true);
+  }
+
+  function updateFsdUI() {
+    $$("[data-fsd]").forEach((btn) => {
+      const selected = btn.dataset.fsd === state.fields.fsd;
+      btn.classList.toggle("is-selected", selected);
+      btn.setAttribute("aria-checked", selected ? "true" : "false");
+    });
+
+    const hint = $("[data-fsd-hint]");
+    if (hint) {
+      if (state.fields.fsd === "none") {
+        hint.textContent = "If you’re not sure, leave this off — you can edit it later.";
+      } else if (state.fields.fsd === "subscription") {
+        hint.textContent = "Subscription is monthly and can usually be added by the next owner.";
+      } else {
+        hint.textContent = "Paid upfront means FSD stays with the Tesla when it’s sold.";
+      }
+    }
+  }
+
+function updateNotifyUI() {
     $$("[data-notify]").forEach((btn) => {
       const selected = btn.dataset.notify === state.fields.notify;
       btn.classList.toggle("is-selected", selected);
@@ -743,6 +771,8 @@
       year: String(f.year || ""),
       zip: String(f.zip || ""),
       state: String(f.state || ""),
+      autopilot: Boolean(f.autopilot),
+      fsd: String(f.fsd || "none"),
       addons: {
         history: f.history,
         videoAddon: Boolean(f.videoAddon),
@@ -1195,6 +1225,7 @@
   updateSummaryCounter();
   updateHistoryUI();
   updateNotifyUI();
+  updateFsdUI();
   syncCheckboxes();
   updateGroupsUI();
   updateSmsUI();

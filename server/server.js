@@ -74,6 +74,8 @@ app.post("/api/create-payment-intent", async (req, res) => {
       listing_year: listing?.year || "",
       listing_zip: listing?.zip || "",
       listing_state: listing?.state || "",
+      listing_autopilot: String(Boolean(listing?.autopilot)),
+      listing_fsd: String(listing?.fsd || "none"),
       addons_history: String(listing?.addons?.history || "none"),
       addons_video: String(Boolean(listing?.addons?.videoAddon)),
       addons_fb_marketplace: String(Boolean(listing?.addons?.fbMarketplace)),
