@@ -1,35 +1,45 @@
 /**
- * Only Used Tesla — Demo v4 (Video + Embedded Payments)
- * ----------------------------------------------------
- * Adds:
- * - Media tabs: Photos / Video (1 minute)
- * - Optional video add-on (+$19) that updates the order total
- * - Video file validation: duration <= 60s, size <= 200MB (adjustable)
+ * Only Used Tesla — Demo v5 (Pricing + Add-ons)
+ * --------------------------------------------
+ * Pricing:
+ * - Basic Ad: $27 (30 days)
+ * Add-ons:
+ * - AutoCheck report: $20 (radio)
+ * - CARFAX report: $20 (radio)
+ * - Video: $20 (1 min max)
+ * - Facebook Marketplace posting: $25 (7 days)
+ * - Facebook groups: $10 per group (0–5)
+ * - Text notifications: $5 (requires phone + OTP verify)
+ * Preferences:
+ * - Notify me when live: Email / Text / Both
  *
- * Stripe:
- * - Still uses Payment Element scaffolding from v3
- * - PaymentIntent create/update now includes `videoAddon`
+ * Embedded payments:
+ * - Stripe Payment Element scaffolding (optional)
+ * - PaymentIntent create/update include selected add-ons
  */
 
 (function () {
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const STORAGE_KEY = "out_checkout_demo_v4";
+  const STORAGE_KEY = "out_checkout_demo_v5";
 
-  const VIDEO_ADDON = { name: "Video showcase", price: 19, amount: 1900 };
+  // Pricing (cents)
+  const BASE_AD = { name: "Basic Ad", amount: 2700, days: 30 };
+  const ADDONS = {
+    video: { name: "Video showcase", amount: 2000, detail: "1‑minute HD walk‑around" },
+    autocheck: { name: "AutoCheck report", amount: 2000, detail: "Vehicle history badge" },
+    carfax: { name: "CARFAX report", amount: 2000, detail: "Vehicle history badge" },
+    fbMarketplace: { name: "Facebook Marketplace posting", amount: 2500, detail: "Posting service (7 days)" },
+    fbGroup: { name: "Facebook group posting", amount: 1000, detail: "$10 per group" },
+    sms: { name: "Text notifications", amount: 500, detail: "Lead alerts by SMS" },
+  };
+
   const VIDEO_MAX_SECONDS = 60;
   const VIDEO_MAX_BYTES = 200 * 1024 * 1024; // 200MB
 
-  const plans = {
-    standard: { name: "Standard", days: 7, price: 49, amount: 4900 },
-    pro: { name: "Pro", days: 14, price: 89, amount: 8900 },
-    max: { name: "Max", days: 30, price: 149, amount: 14900 },
-  };
-
   const state = {
     step: 1,
-    listingType: "sell",
     mediaTab: "photos",
     media: {
       photoCount: 0,
@@ -37,8 +47,6 @@
       videoMeta: null,
     },
     fields: {
-      listOnSite: true,
-      boostWithAd: true,
       cashOffer: false,
 
       vin: "",
@@ -51,8 +59,19 @@
       autopilot: false,
       summary: "",
 
-      plan: "standard",
+      history: "none", // none | autocheck | carfax
       videoAddon: false,
+      fbMarketplace: false,
+      fbGroups: 0,
+
+      sms: false,
+      phone: "",
+      otp: "",
+      otpSent: false,
+      otpVerified: false,
+      otpCode: "123456", // demo code
+
+      notify: "email", // email | text | both
 
       email: "",
       magicLink: true,
@@ -68,7 +87,7 @@
   let stripeReady = false;
   let stripeMounted = false;
 
-  // ----------- Restore / persist -----------
+  // ---------- Restore / persist ----------
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -76,10 +95,13 @@
       const saved = JSON.parse(raw);
       if (saved && typeof saved === "object") {
         state.step = saved.step ?? state.step;
-        state.listingType = saved.listingType ?? state.listingType;
         state.mediaTab = saved.mediaTab ?? state.mediaTab;
         state.media = { ...state.media, ...(saved.media || {}) };
         state.fields = { ...state.fields, ...(saved.fields || {}) };
+
+        // Security-ish resets for demo (optional):
+        // Keep otpVerified, but reset otp input field.
+        state.fields.otp = "";
       }
     } catch (e) {}
   }
@@ -87,10 +109,11 @@
   let toastTimer = null;
   function showToast(msg = "Saved") {
     const toast = $("[data-toast]");
+    if (!toast) return;
     toast.textContent = msg;
     toast.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toast.hidden = true; }, 1200);
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 1300);
   }
 
   function save(show = false) {
@@ -105,7 +128,7 @@
     window.location.reload();
   }
 
-  // ----------- Step navigation -----------
+  // ---------- Step navigation ----------
   function setStep(nextStep) {
     state.step = Math.max(1, Math.min(5, nextStep));
 
@@ -113,28 +136,30 @@
       el.classList.toggle("is-active", Number(el.dataset.step) === state.step);
     });
 
-    // Back button
     const backBtn = $("[data-back]");
-    backBtn.disabled = state.step === 1;
+    if (backBtn) backBtn.disabled = state.step === 1;
 
-    // Stepper
     $$("[data-step-index]").forEach((el) => {
       const i = Number(el.dataset.stepIndex);
       el.classList.toggle("is-active", i === state.step);
       el.classList.toggle("is-complete", i < state.step);
     });
 
-    // Update CTA hint
     $$("[data-cta-hint]").forEach((el) => {
       el.textContent = `Step ${state.step} of 5 — ${hintForStep(state.step)}`;
     });
 
     updateSummaryCounter();
     updateMediaCounts();
-    updateAdPreview();
-    updateOrder();
-    updatePlanDialogSelection();
-    updateMediaTabUI();
+    updateVideoStatusLine();
+    updateHistoryUI();
+    updateNotifyUI();
+    syncCheckboxes();
+    updateGroupsUI();
+    updateSmsUI();
+    renderOrderLines();
+    updateTotalUI();
+    updatePayButtonLabel();
 
     save(false);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -148,14 +173,14 @@
     switch (step) {
       case 1: return "You’re off to a great start.";
       case 2: return "You’re doing great. Keep it simple.";
-      case 3: return "Quick preview before payment.";
-      case 4: return "You’re still on Only Used Tesla.";
+      case 3: return "Optional upgrades.";
+      case 4: return "Review and pay securely.";
       case 5: return "Submitted. Nice work.";
       default: return "";
     }
   }
 
-  // ----------- Validation helpers -----------
+  // ---------- Validation helpers ----------
   function setFieldState(validateKey, ok, message = "") {
     const fieldWrap = $(`[data-validate="${validateKey}"]`);
     if (!fieldWrap) return;
@@ -179,16 +204,15 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
   }
 
-  // VIN: 17 chars, digits + capital letters except I, O, Q.
   function normalizeVin(raw) {
     return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   }
+
   function isVinValid(vinRaw) {
     const vin = normalizeVin(vinRaw);
     return /^[A-HJ-NPR-Z0-9]{17}$/.test(vin);
   }
 
-  // Display spacing: 4-4-4-5
   function formatVinDisplay(vinRaw) {
     const vin = normalizeVin(vinRaw).slice(0, 17);
     const parts = [];
@@ -197,6 +221,25 @@
     parts.push(vin.slice(8, 12));
     parts.push(vin.slice(12, 17));
     return parts.filter(Boolean).join(" ");
+  }
+
+  function normalizePhone(raw) {
+    return String(raw || "").replace(/\D/g, "").slice(0, 10);
+  }
+
+  function formatPhoneDisplay(raw) {
+    const d = normalizePhone(raw);
+    if (!d) return "";
+    const a = d.slice(0, 3);
+    const b = d.slice(3, 6);
+    const c = d.slice(6, 10);
+    if (d.length <= 3) return `(${a}`;
+    if (d.length <= 6) return `(${a}) ${b}`;
+    return `(${a}) ${b}-${c}`;
+  }
+
+  function isPhoneValid(raw) {
+    return normalizePhone(raw).length === 10;
   }
 
   function validateStep(step) {
@@ -234,15 +277,33 @@
     }
 
     if (step === 4) {
+      // Email required
       const email = String(state.fields.email || "").trim();
       if (!isEmailValid(email)) { ok = false; setFieldState("email", false, "Please enter a valid email address."); }
       else setFieldState("email", true, "");
+
+      // If SMS add-on selected, require verified phone
+      if (state.fields.sms) {
+        if (!isPhoneValid(state.fields.phone || "")) {
+          ok = false;
+          showToast("Please add a valid mobile number for text notifications.");
+        } else if (!state.fields.otpVerified) {
+          ok = false;
+          showToast("Please verify your mobile number to enable text notifications.");
+        }
+      }
+
+      // If notify includes text, require verified phone
+      if ((state.fields.notify === "text" || state.fields.notify === "both") && !state.fields.otpVerified) {
+        ok = false;
+        showToast("To use text notifications for “ad live”, please verify your mobile number.");
+      }
     }
 
     return ok;
   }
 
-  // ----------- Media tabs -----------
+  // ---------- Media tabs ----------
   function setMediaTab(tab) {
     state.mediaTab = tab;
     updateMediaTabUI();
@@ -267,13 +328,8 @@
     const videoCountEl = $("[data-video-count]");
     if (photoCountEl) photoCountEl.textContent = String(state.media.photoCount || 0);
     if (videoCountEl) videoCountEl.textContent = state.media.hasVideo ? "1" : "0";
-
-    // Payment screen video line
-    const videoLine = $("[data-video-line]");
-    if (videoLine) videoLine.hidden = !state.fields.videoAddon;
   }
 
-  // ----------- UI updates -----------
   function updateSummaryCounter() {
     const max = 500;
     const summary = String(state.fields.summary || "");
@@ -283,110 +339,238 @@
     if (maxEl) maxEl.textContent = String(max);
   }
 
-  function maskedVinForPreview(vinRaw) {
-    const vin = normalizeVin(vinRaw);
-    if (!vin) return "VIN —";
-    if (vin.length < 6) return `VIN ${vin}`;
-    const last6 = vin.slice(-6);
-    return `VIN •••••••••••${last6}`;
+  // ---------- Add-ons UI ----------
+  function historyRequiresVin() {
+    return isVinValid(state.fields.vin || "");
   }
 
-  function updateAdPreview() {
-    const f = state.fields;
+  function setHistory(value) {
+    if (!["none", "autocheck", "carfax"].includes(value)) return;
 
-    const title = `${f.year || "—"} ${f.model || "Tesla"}${f.autopilot ? " · Autopilot" : ""}`;
-    const subParts = [];
-    if (f.price) subParts.push(`$${Number(f.price).toLocaleString()}`);
-    if (f.zip) subParts.push(f.zip);
-    if (f.state) subParts.push(f.state);
-    const sub = subParts.length ? subParts.join(" · ") : "—";
-    const body = String(f.summary || "").trim() || "—";
+    if (value !== "none" && !historyRequiresVin()) {
+      // Keep selection at none
+      state.fields.history = "none";
+      updateHistoryUI();
+      showToast("Add a valid VIN to enable history reports.");
+      return;
+    }
 
-    const titleEl = $("[data-ad-title]");
-    const subEl = $("[data-ad-sub]");
-    const bodyEl = $("[data-ad-body]");
-    const vinEl = $("[data-ad-vin]");
-    const apEl = $("[data-ad-ap]");
-    const videoEl = $("[data-ad-video]");
-
-    if (titleEl) titleEl.textContent = title;
-    if (subEl) subEl.textContent = sub;
-    if (bodyEl) bodyEl.textContent = body;
-    if (vinEl) vinEl.textContent = maskedVinForPreview(f.vin);
-    if (apEl) apEl.textContent = f.autopilot ? "Autopilot On" : "Autopilot Off";
-    if (videoEl) videoEl.textContent = f.videoAddon ? "Video Included" : "No Video";
+    state.fields.history = value;
+    updateHistoryUI();
+    renderOrderLines();
+    updateTotalUI();
+    updatePayButtonLabel();
+    save(true);
+    refreshStripeAmountAfterOrderChange().catch(()=>{});
   }
 
-  function calcTotalCents() {
-    const plan = plans[state.fields.plan] || plans.standard;
-    let total = plan.amount;
-    if (state.fields.videoAddon) total += VIDEO_ADDON.amount;
-    return total;
+  function updateHistoryUI() {
+    $$("[data-history]").forEach((btn) => {
+      const selected = btn.dataset.history === state.fields.history;
+      btn.classList.toggle("is-selected", selected);
+      btn.setAttribute("aria-checked", selected ? "true" : "false");
+    });
   }
 
-  function updateOrder() {
-    const plan = plans[state.fields.plan] || plans.standard;
-    const totalCents = calcTotalCents();
+  function setNotify(value) {
+    if (!["email", "text", "both"].includes(value)) return;
 
-    const planEl = $("[data-order-plan]");
-    const planSubEl = $("[data-order-plan-sub]");
-    const priceEl = $("[data-order-price]");
-    const totalEl = $("[data-order-total]");
-    const receiptPlanEl = $("[data-receipt-plan]");
-    const receiptTotalEl = $("[data-receipt-total]");
+    // If text/both chosen without verified phone, allow selection but show hint and mark disabled state
+    state.fields.notify = value;
+    updateNotifyUI();
+    save(false);
+  }
 
-    if (planEl) planEl.textContent = plan.name;
-    if (planSubEl) planSubEl.textContent = `${plan.days} days`;
-    if (priceEl) priceEl.textContent = `$${plan.price.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `$${(totalCents / 100).toFixed(2)}`;
-    if (receiptPlanEl) receiptPlanEl.textContent = plan.name;
-    if (receiptTotalEl) receiptTotalEl.textContent = `$${(totalCents / 100).toFixed(2)}`;
+  function updateNotifyUI() {
+    $$("[data-notify]").forEach((btn) => {
+      const selected = btn.dataset.notify === state.fields.notify;
+      btn.classList.toggle("is-selected", selected);
+      btn.setAttribute("aria-checked", selected ? "true" : "false");
+    });
 
-    // Video line price
-    const videoPriceEl = $("[data-video-price]");
-    if (videoPriceEl) videoPriceEl.textContent = `$${VIDEO_ADDON.price.toFixed(2)}`;
+    // Disable text/both when SMS not enabled? We allow it, but we nudge.
+    const hint = $("[data-notify-hint]");
+    const needsPhone = state.fields.notify === "text" || state.fields.notify === "both";
+    if (hint) {
+      if (!needsPhone) hint.textContent = "Email is the fastest option.";
+      else if (state.fields.otpVerified) hint.textContent = "Great — we’ll text you as soon as your ad is live.";
+      else hint.textContent = "To use text here, turn on Text notifications and verify your mobile number.";
+    }
 
-    // Pay button label
-    const payBtn = $("[data-pay]");
-    if (payBtn && state.step === 4) {
-      payBtn.textContent = `Pay $${Math.round(totalCents / 100)} & submit for review`;
+    // Step 5 receipt
+    const receiptNotify = $("[data-receipt-notify]");
+    if (receiptNotify) {
+      receiptNotify.textContent = state.fields.notify === "both" ? "Email + Text" : (state.fields.notify === "text" ? "Text" : "Email");
+    }
+
+    // If user chose text/both but sms toggle is off, keep choice but it won't pass validation later.
+    // This reduces surprise: they see the hint.
+  }
+
+  function updateVideoStatusLine() {
+    const status = $("[data-video-status]");
+    if (!status) return;
+
+    if (!state.fields.videoAddon) {
+      status.textContent = "Video is off. You can add it any time.";
+      return;
+    }
+
+    if (state.media.hasVideo) status.textContent = "Video uploaded. Nice — this usually increases buyer trust.";
+    else status.textContent = "No video uploaded yet. You can add one now or later.";
+  }
+
+  function syncCheckboxes() {
+    // For checkboxes that appear in multiple places (Step 2/3 + Order dialog)
+    const keys = ["cashOffer", "videoAddon", "fbMarketplace", "sms", "magicLink"];
+    keys.forEach((k) => {
+      $$(`[data-field="${k}"]`).forEach((el) => {
+        if (el.type === "checkbox") el.checked = Boolean(state.fields[k]);
+      });
+    });
+
+    // Show/hide SMS panel
+    const panel = $("[data-sms-panel]");
+    if (panel) panel.hidden = !state.fields.sms;
+
+    // If SMS toggle turned off, also ensure notify isn't stuck on text-only without a way to verify
+    // We won't override choice automatically; the hint + validation handles it.
+  }
+
+  function setGroupsCount(next) {
+    const v = Math.max(0, Math.min(5, Number(next)));
+    state.fields.fbGroups = v;
+    updateGroupsUI();
+    renderOrderLines();
+    updateTotalUI();
+    updatePayButtonLabel();
+    save(true);
+    refreshStripeAmountAfterOrderChange().catch(()=>{});
+  }
+
+  function updateGroupsUI() {
+    const count = Number(state.fields.fbGroups || 0);
+    const totalCents = count * ADDONS.fbGroup.amount;
+
+    $$("[data-groups-count]").forEach((el) => el.textContent = String(count));
+    $$("[data-groups-total]").forEach((el) => el.textContent = totalCents ? `+$${(totalCents/100).toFixed(0)}` : "$0");
+  }
+
+  function updateSmsUI() {
+    const phoneInput = $('[data-field="phone"]');
+    if (phoneInput) phoneInput.value = formatPhoneDisplay(state.fields.phone);
+
+    // OTP hint
+    const otpHint = $("[data-otp-hint]");
+    if (otpHint) {
+      if (!state.fields.sms) otpHint.textContent = "";
+      else if (state.fields.otpVerified) otpHint.textContent = "Verified. You’re all set.";
+      else if (state.fields.otpSent) otpHint.textContent = "Code sent. Enter it to verify your number.";
+      else otpHint.textContent = "We’ll only text you for leads and important updates.";
+    }
+
+    // OTP row visibility
+    const otpRow = $("[data-otp-row]");
+    if (otpRow)_toggle(otpRow, state.fields.otpSent && !state.fields.otpVerified);
+
+    // Phone field validation styling
+    const phoneWrap = $('[data-validate="phone"]');
+    if (phoneWrap) {
+      phoneWrap.classList.remove("is-valid","is-invalid");
+      if (state.fields.sms) {
+        if (!state.fields.phone) {}
+        else if (isPhoneValid(state.fields.phone)) phoneWrap.classList.add("is-valid");
+        else phoneWrap.classList.add("is-invalid");
+      }
+    }
+
+    function _toggle(el, show){
+      el.hidden = !show;
     }
   }
 
-  function setListingType(choice) {
-    state.listingType = choice;
-    $$("[data-choice]").forEach((btn) => {
-      const selected = btn.dataset.choice === choice;
-      btn.classList.toggle("is-selected", selected);
-      btn.setAttribute("aria-checked", selected ? "true" : "false");
-    });
-    save(true);
+  // ---------- Order + totals ----------
+  function calcTotalCents() {
+    let total = BASE_AD.amount;
+
+    // history
+    if (state.fields.history === "autocheck") total += ADDONS.autocheck.amount;
+    if (state.fields.history === "carfax") total += ADDONS.carfax.amount;
+
+    // video
+    if (state.fields.videoAddon) total += ADDONS.video.amount;
+
+    // fb marketplace
+    if (state.fields.fbMarketplace) total += ADDONS.fbMarketplace.amount;
+
+    // fb groups
+    const groups = Number(state.fields.fbGroups || 0);
+    total += groups * ADDONS.fbGroup.amount;
+
+    // sms
+    if (state.fields.sms) total += ADDONS.sms.amount;
+
+    return total;
   }
 
-  function setPlan(planKey) {
-    if (!plans[planKey]) return;
-    state.fields.plan = planKey;
+  function renderOrderLines() {
+    const wrap = $("[data-order-lines]");
+    if (!wrap) return;
 
-    $$("[data-plan]").forEach((btn) => {
-      const selected = btn.dataset.plan === planKey;
-      btn.classList.toggle("is-selected", selected);
-      btn.setAttribute("aria-checked", selected ? "true" : "false");
-    });
+    const lines = [];
 
-    updateOrder();
-    updatePlanDialogSelection();
-    save(true);
+    // history
+    if (state.fields.history === "autocheck") lines.push({ title: ADDONS.autocheck.name, sub: ADDONS.autocheck.detail, amt: ADDONS.autocheck.amount });
+    if (state.fields.history === "carfax") lines.push({ title: ADDONS.carfax.name, sub: ADDONS.carfax.detail, amt: ADDONS.carfax.amount });
+
+    // video
+    if (state.fields.videoAddon) lines.push({ title: "Video (1 min)", sub: ADDONS.video.detail, amt: ADDONS.video.amount });
+
+    // marketplace
+    if (state.fields.fbMarketplace) lines.push({ title: ADDONS.fbMarketplace.name, sub: ADDONS.fbMarketplace.detail, amt: ADDONS.fbMarketplace.amount });
+
+    // groups
+    const groups = Number(state.fields.fbGroups || 0);
+    if (groups > 0) lines.push({ title: `Facebook groups (${groups})`, sub: "Posting service", amt: groups * ADDONS.fbGroup.amount });
+
+    // sms
+    if (state.fields.sms) lines.push({ title: ADDONS.sms.name, sub: ADDONS.sms.detail, amt: ADDONS.sms.amount });
+
+    wrap.innerHTML = lines.map((l) => `
+      <div class="order-row">
+        <div>
+          <div class="order-title">${escapeHtml(l.title)}</div>
+          <div class="order-sub">${escapeHtml(l.sub)}</div>
+        </div>
+        <div class="order-right">
+          <div class="order-amt">+$${(l.amt/100).toFixed(2)}</div>
+        </div>
+      </div>
+    `).join("");
   }
 
-  function updatePlanDialogSelection() {
-    $$("[data-plan-dialog-choice]").forEach((btn) => {
-      const selected = btn.dataset.planDialogChoice === state.fields.plan;
-      btn.classList.toggle("is-selected", selected);
-      btn.setAttribute("aria-checked", selected ? "true" : "false");
-    });
+  function updateTotalUI() {
+    const totalCents = calcTotalCents();
+    const totalEl = $("[data-order-total]");
+    const receiptTotal = $("[data-receipt-total]");
+    if (totalEl) totalEl.textContent = `$${(totalCents/100).toFixed(2)}`;
+    if (receiptTotal) receiptTotal.textContent = `$${(totalCents/100).toFixed(2)}`;
   }
 
-  // ----------- Video handling -----------
+  function updatePayButtonLabel() {
+    const payBtn = $("[data-pay]");
+    if (!payBtn) return;
+    const total = calcTotalCents();
+    payBtn.textContent = `Pay $${Math.round(total/100)} & submit for review`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  // ---------- Video handling ----------
   function setVideoMessage(msg, isError = false) {
     const el = $("[data-video-msg]");
     if (!el) return;
@@ -415,8 +599,9 @@
   function clearVideo() {
     state.media.hasVideo = false;
     state.media.videoMeta = null;
-    state.fields.videoAddon = false;
 
+    // If they remove video, keep videoAddon ON if they chose it (so they can upload later),
+    // but if videoAddon was auto-enabled from upload, we keep it on and let them toggle it off manually.
     const input = $("[data-video]");
     if (input) input.value = "";
 
@@ -433,31 +618,18 @@
 
     setVideoMessage("", false);
     updateMediaCounts();
-    updateAdPreview();
-    updateOrder();
-    syncVideoAddonCheckboxes();
+    updateVideoStatusLine();
     save(true);
-  }
-
-  function syncVideoAddonCheckboxes() {
-    $$('[data-field="videoAddon"]').forEach((cb) => {
-      cb.checked = Boolean(state.fields.videoAddon);
-    });
-
-    const videoLine = $("[data-video-line]");
-    if (videoLine) videoLine.hidden = !state.fields.videoAddon;
   }
 
   async function validateAndSetVideoFile(file) {
     if (!file) return;
 
-    // Size check
     if (file.size > VIDEO_MAX_BYTES) {
       setVideoMessage("That file is a bit large. Please keep it under 200MB (shorter videos load faster).", true);
       return;
     }
 
-    // Duration check: read metadata via a temporary video element
     const temp = document.createElement("video");
     temp.preload = "metadata";
 
@@ -487,16 +659,61 @@
     state.media.videoMeta = { name: file.name, size: file.size, duration };
 
     state.fields.videoAddon = true; // uploading implies hosting/processing
-    syncVideoAddonCheckboxes();
+    syncCheckboxes();
 
     showVideoPreview(file, duration);
     updateMediaCounts();
-    updateAdPreview();
-    updateOrder();
+    updateVideoStatusLine();
+    renderOrderLines();
+    updateTotalUI();
+    updatePayButtonLabel();
+    save(true);
+    refreshStripeAmountAfterOrderChange().catch(()=>{});
+  }
+
+  // ---------- OTP handling ----------
+  function sendOtp() {
+    if (!state.fields.sms) return;
+
+    if (!isPhoneValid(state.fields.phone)) {
+      setFieldState("phone", false, "Please enter a valid 10‑digit mobile number.");
+      showToast("Please enter a valid mobile number first.");
+      return;
+    }
+
+    state.fields.otpSent = true;
+    state.fields.otpVerified = false;
+    state.fields.otp = "";
+
+    // Demo: fixed code shown via toast (keeps UX simple for your dev)
+    showToast(`Demo code: ${state.fields.otpCode}`);
+    updateSmsUI();
+    save(false);
+  }
+
+  function verifyOtp() {
+    if (!state.fields.sms) return;
+    const entered = String(state.fields.otp || "").trim();
+    if (entered.length !== 6) {
+      showToast("Please enter the 6‑digit code.");
+      return;
+    }
+
+    if (entered !== state.fields.otpCode) {
+      showToast("That code didn’t match. Try again, or resend.");
+      return;
+    }
+
+    state.fields.otpVerified = true;
+    state.fields.otpSent = false;
+    state.fields.otp = "";
+    showToast("Verified");
+    updateSmsUI();
+    updateNotifyUI();
     save(true);
   }
 
-  // ----------- Embedded Stripe scaffolding -----------
+  // ---------- Embedded Stripe scaffolding ----------
   function apiBase() {
     return (window.ONLYUSEDTESLA_API_BASE || "").replace(/\/$/, "");
   }
@@ -526,7 +743,15 @@
       year: String(f.year || ""),
       zip: String(f.zip || ""),
       state: String(f.state || ""),
-      videoAddon: Boolean(f.videoAddon),
+      addons: {
+        history: f.history,
+        videoAddon: Boolean(f.videoAddon),
+        fbMarketplace: Boolean(f.fbMarketplace),
+        fbGroups: Number(f.fbGroups || 0),
+        sms: Boolean(f.sms),
+        cashOffer: Boolean(f.cashOffer),
+      },
+      notify: f.notify,
     };
   }
 
@@ -535,8 +760,6 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        plan: state.fields.plan,
-        videoAddon: Boolean(state.fields.videoAddon),
         email: String(state.fields.email || "").trim(),
         listing: listingSnapshotForMetadata(),
       }),
@@ -560,8 +783,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         paymentIntentId,
-        plan: state.fields.plan,
-        videoAddon: Boolean(state.fields.videoAddon),
+        listing: listingSnapshotForMetadata(),
       }),
     });
 
@@ -679,7 +901,7 @@
     stampReference();
   }
 
-  // ----------- Event wiring -----------
+  // ---------- Wiring ----------
   function wire() {
     // Next buttons
     $$("[data-next]").forEach((btn) => {
@@ -701,24 +923,22 @@
     });
 
     // Back
-    $("[data-back]").addEventListener("click", () => {
+    const back = $("[data-back]");
+    if (back) back.addEventListener("click", () => {
       if (state.step <= 1) return;
       setStep(state.step - 1);
     });
 
     // Help dialog
     const helpDialog = $("[data-help-dialog]");
-    $("[data-help]").addEventListener("click", () => {
+    const helpBtn = $("[data-help]");
+    if (helpBtn && helpDialog) helpBtn.addEventListener("click", () => {
       if (!helpDialog.open) helpDialog.showModal();
     });
 
     // Reset demo data
-    $("[data-reset-draft]").addEventListener("click", resetDraft);
-
-    // Listing type
-    $$("[data-choice]").forEach((btn) => {
-      btn.addEventListener("click", () => setListingType(btn.dataset.choice));
-    });
+    const resetBtn = $("[data-reset-draft]");
+    if (resetBtn) resetBtn.addEventListener("click", resetDraft);
 
     // Media tabs
     $$("[data-media-tab]").forEach((btn) => {
@@ -747,71 +967,72 @@
       });
     }
 
-    // Replace video
+    // Replace / remove video
     const replaceBtn = $("[data-video-replace]");
-    if (replaceBtn && videoInput) {
-      replaceBtn.addEventListener("click", () => videoInput.click());
-    }
+    if (replaceBtn && videoInput) replaceBtn.addEventListener("click", () => videoInput.click());
 
-    // Remove video
     const removeBtn = $("[data-video-remove]");
-    if (removeBtn) {
-      removeBtn.addEventListener("click", clearVideo);
-    }
+    if (removeBtn) removeBtn.addEventListener("click", clearVideo);
 
-    // Plan selection (Step 3)
-    $$("[data-plan]").forEach((btn) => {
-      btn.addEventListener("click", () => setPlan(btn.dataset.plan));
+    // History buttons
+    $$("[data-history]").forEach((btn) => {
+      btn.addEventListener("click", () => setHistory(btn.dataset.history));
     });
 
-    // Edit details from preview
-    const editBtn = $("[data-edit-details]");
-    if (editBtn) editBtn.addEventListener("click", () => setStep(2));
-
-    // Payment screen "edit media"
-    const editMediaBtn = $("[data-edit-media]");
-    if (editMediaBtn) editMediaBtn.addEventListener("click", () => {
-      setStep(2);
-      setMediaTab("video");
+    // Notify radio buttons
+    $$("[data-notify]").forEach((btn) => {
+      btn.addEventListener("click", () => setNotify(btn.dataset.notify));
     });
 
-    // Plan change dialog
-    const planDialog = $("[data-plan-dialog]");
-    const openPlanBtn = $("[data-open-plan]");
-    if (openPlanBtn && planDialog) {
-      openPlanBtn.addEventListener("click", () => {
-        if (!planDialog.open) planDialog.showModal();
+    // Groups qty buttons (multiple instances: step 3 + order dialog)
+    $$("[data-groups-inc]").forEach((btn) => btn.addEventListener("click", () => setGroupsCount(Number(state.fields.fbGroups||0) + 1)));
+    $$("[data-groups-dec]").forEach((btn) => btn.addEventListener("click", () => setGroupsCount(Number(state.fields.fbGroups||0) - 1)));
+
+    // OTP
+    const sendBtn = $("[data-otp-send]");
+    if (sendBtn) sendBtn.addEventListener("click", sendOtp);
+
+    const verifyBtn = $("[data-otp-verify]");
+    if (verifyBtn) verifyBtn.addEventListener("click", verifyOtp);
+
+    // Order dialog
+    const orderDialog = $("[data-order-dialog]");
+    const editOrderBtn = $("[data-edit-order]");
+    if (editOrderBtn && orderDialog) {
+      editOrderBtn.addEventListener("click", () => {
+        if (!orderDialog.open) orderDialog.showModal();
+      });
+      orderDialog.addEventListener("close", () => {
+        // On close, refresh totals and Stripe amount
+        renderOrderLines();
+        updateTotalUI();
+        updatePayButtonLabel();
+        refreshStripeAmountAfterOrderChange().catch(()=>{});
       });
     }
-
-    $$("[data-plan-dialog-choice]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const planKey = btn.dataset.planDialogChoice;
-        setPlan(planKey);
-        await refreshStripeAmountAfterOrderChange();
-        if (planDialog && planDialog.open) planDialog.close();
-      });
-    });
 
     // Pay
-    $("[data-pay]").addEventListener("click", async () => {
+    const payBtn = $("[data-pay]");
+    if (payBtn) payBtn.addEventListener("click", async () => {
       const ok = validateStep(4);
       if (!ok) return;
       await payWithStripeIfConfigured();
     });
 
     // Start over
-    $("[data-start-over]").addEventListener("click", () => {
+    const startOverBtn = $("[data-start-over]");
+    if (startOverBtn) startOverBtn.addEventListener("click", () => {
       localStorage.removeItem(STORAGE_KEY);
       window.location.reload();
     });
 
     // Demo dashboard
-    $("[data-view-dashboard]").addEventListener("click", () => {
-      alert("Next build step: Manage your ad.\n\n- Upload/replace video\n- Pause/renew\n- Reporting");
+    const dashBtn = $("[data-view-dashboard]");
+    if (dashBtn) dashBtn.addEventListener("click", () => {
+      alert("Next build step: Manage your ad.\n\n- Edit price/summary\n- Upload/replace video\n- View leads\n- Renew/extend");
     });
 
-    // Inputs (generic)
+    // Inputs (generic) - supports multiple fields
     $$("[data-field]").forEach((el) => {
       const key = el.dataset.field;
 
@@ -819,6 +1040,7 @@
       if (el.type === "checkbox") el.checked = Boolean(state.fields[key]);
       else {
         if (key === "vin") el.value = formatVinDisplay(state.fields.vin);
+        else if (key === "phone") el.value = formatPhoneDisplay(state.fields.phone);
         else el.value = state.fields[key] ?? "";
       }
 
@@ -830,56 +1052,86 @@
             const formatted = formatVinDisplay(el.value);
             el.value = formatted;
             state.fields.vin = normalizeVin(formatted);
+          } else if (key === "phone") {
+            const formatted = formatPhoneDisplay(el.value);
+            el.value = formatted;
+            state.fields.phone = normalizePhone(formatted);
+            // Reset verification if phone changes
+            state.fields.otpVerified = false;
+            state.fields.otpSent = false;
+            state.fields.otp = "";
           } else {
             state.fields[key] = el.value;
           }
         }
 
-        // Summary validation
+        // Summary live
         if (key === "summary") {
           updateSummaryCounter();
           const good = String(state.fields.summary || "").trim().length >= 50 && String(state.fields.summary || "").length <= 500;
           setFieldState("summary", good, good ? "" : "Add at least 50 characters.");
         }
 
-        // VIN live validation
+        // VIN live
         if (key === "vin") {
           const vin = normalizeVin(state.fields.vin);
           if (!vin) clearFieldState("vin");
           else if (vin.length < 17) clearFieldState("vin");
           else if (vin.length === 17 && isVinValid(vin)) setFieldState("vin", true, "");
           else setFieldState("vin", false, "That VIN doesn’t look right. VINs don’t use I, O, or Q.");
+
+          // If history is selected but VIN becomes invalid, drop back to none
+          if (!historyRequiresVin() && state.fields.history !== "none") {
+            state.fields.history = "none";
+            updateHistoryUI();
+          }
         }
 
-        // Email soft validation
+        // Email soft
         if (key === "email") {
           const good = isEmailValid(state.fields.email || "");
           if (!String(state.fields.email || "").trim()) {
             const fieldWrap = $('[data-validate="email"]');
-            fieldWrap.classList.remove("is-valid", "is-invalid");
+            if (fieldWrap) fieldWrap.classList.remove("is-valid", "is-invalid");
           } else {
             setFieldState("email", good, good ? "" : "That email doesn’t look right — please double-check.");
           }
         }
 
-        // Video add-on checkbox behavior
-        if (key === "videoAddon") {
-          // If turning OFF, remove video (keeps UX consistent: if you’re not paying for it, we won’t store it)
-          if (!state.fields.videoAddon) {
-            clearVideo();
+        // Phone live
+        if (key === "phone") {
+          if (!state.fields.sms) {
+            clearFieldState("phone");
+          } else if (!state.fields.phone) {
+            clearFieldState("phone");
+          } else if (isPhoneValid(state.fields.phone)) {
+            setFieldState("phone", true, "");
           } else {
-            // If turning ON without a video, that’s OK — user can upload later.
-            syncVideoAddonCheckboxes();
-            updateMediaCounts();
-            updateAdPreview();
-            updateOrder();
-            save(true);
+            setFieldState("phone", false, "Please enter a valid 10‑digit mobile number.");
           }
+        }
 
-          // If on payment screen with Stripe mounted, update amount
-          if (state.step === 4) {
-            await refreshStripeAmountAfterOrderChange();
+        // Toggle-specific behavior
+        if (key === "videoAddon") {
+          // If turning OFF, clear video selection message but keep uploaded file (demo keeps it).
+          if (!state.fields.videoAddon) {
+            // user explicitly turned off -> we keep video uploaded, but order won't charge; that's ok.
+            setVideoMessage("", false);
           }
+          updateVideoStatusLine();
+          renderOrderLines();
+          updateTotalUI();
+          updatePayButtonLabel();
+          await refreshStripeAmountAfterOrderChange();
+        }
+
+        if (key === "fbMarketplace" || key === "sms") {
+          syncCheckboxes();
+          updateSmsUI();
+          renderOrderLines();
+          updateTotalUI();
+          updatePayButtonLabel();
+          await refreshStripeAmountAfterOrderChange();
         }
 
         // Soft validations for selects/required fields
@@ -897,17 +1149,22 @@
           }
         }
 
-        updateMediaCounts();
-        updateAdPreview();
-        updateOrder();
-        syncVideoAddonCheckboxes();
-
         // Draft save feedback
         const status = $("[data-draft-status]");
-        if (status) status.textContent = "Draft saved.";
+        if (status && state.step === 2) status.textContent = "Draft saved.";
         save(false);
         if (state.step === 2) showToast("Saved");
         if (status) setTimeout(() => (status.textContent = "Draft saving is on."), 1100);
+
+        // Update global UI
+        updateMediaCounts();
+        updateVideoStatusLine();
+        updateHistoryUI();
+        updateNotifyUI();
+        updateGroupsUI();
+        renderOrderLines();
+        updateTotalUI();
+        updatePayButtonLabel();
       };
 
       el.addEventListener("input", handler);
@@ -926,22 +1183,24 @@
     });
   }
 
-  // ----------- Init -----------
+  // ---------- Init ----------
   load();
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("success") === "1") state.step = 5;
 
-  setListingType(state.listingType);
-  setPlan(state.fields.plan);
-
-  updateSummaryCounter();
-  updateMediaCounts();
   updateMediaTabUI();
-  updateAdPreview();
-  updateOrder();
-  updatePlanDialogSelection();
-  syncVideoAddonCheckboxes();
+  updateMediaCounts();
+  updateVideoStatusLine();
+  updateSummaryCounter();
+  updateHistoryUI();
+  updateNotifyUI();
+  syncCheckboxes();
+  updateGroupsUI();
+  updateSmsUI();
+  renderOrderLines();
+  updateTotalUI();
+  updatePayButtonLabel();
 
   wire();
   setStep(state.step);

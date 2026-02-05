@@ -1,7 +1,13 @@
 /**
- * Only Used Tesla — Embedded Payments Demo Server (v4)
+ * Only Used Tesla — Embedded Payments Demo Server (v5 pricing)
  *
- * Adds an optional "videoAddon" that affects the payment amount.
+ * Base: Basic Ad $27
+ * Add-ons:
+ * - history: autocheck/carfax (+$20)
+ * - videoAddon (+$20)
+ * - fbMarketplace (+$25)
+ * - fbGroups (0-5) * $10
+ * - sms (+$5)
  *
  * IMPORTANT:
  * - Never trust totals from the browser. Always compute amounts server-side.
@@ -22,44 +28,59 @@ app.use(express.json());
 const ORIGIN = process.env.CORS_ORIGIN || "*";
 app.use(cors({ origin: ORIGIN }));
 
-const PLANS = {
-  standard: { name: "Standard", amount: 4900, currency: "usd" },
-  pro: { name: "Pro", amount: 8900, currency: "usd" },
-  max: { name: "Max", amount: 14900, currency: "usd" },
+const PRICES = {
+  base: 2700,
+  history: 2000,      // autocheck OR carfax
+  video: 2000,
+  fbMarketplace: 2500,
+  fbGroup: 1000,
+  sms: 500
 };
 
-const VIDEO_ADDON = { name: "Video showcase", amount: 1900 };
+function computeTotalAmount(listing) {
+  const addons = listing?.addons || {};
+  const history = (addons.history || "none");
 
-function computeTotalAmount({ plan, videoAddon }) {
-  const p = PLANS[plan];
-  if (!p) throw new Error("Invalid plan");
+  let amount = PRICES.base;
 
-  let amount = p.amount;
-  if (videoAddon) amount += VIDEO_ADDON.amount;
-  return { amount, currency: p.currency };
+  if (history === "autocheck" || history === "carfax") amount += PRICES.history;
+  if (addons.videoAddon) amount += PRICES.video;
+  if (addons.fbMarketplace) amount += PRICES.fbMarketplace;
+
+  const groups = Math.max(0, Math.min(5, Number(addons.fbGroups || 0)));
+  amount += groups * PRICES.fbGroup;
+
+  if (addons.sms) amount += PRICES.sms;
+
+  return { amount, currency: "usd" };
 }
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 /**
  * Create PaymentIntent
- * Body: { plan, videoAddon, email, listing }
+ * Body: { email, listing }
  * Returns: { clientSecret, paymentIntentId }
  */
 app.post("/api/create-payment-intent", async (req, res) => {
   try {
-    const { plan, videoAddon, email, listing } = req.body || {};
-    const { amount, currency } = computeTotalAmount({ plan, videoAddon: Boolean(videoAddon) });
+    const { email, listing } = req.body || {};
+    const { amount, currency } = computeTotalAmount(listing);
 
     const metadata = {
-      plan: String(plan),
-      videoAddon: String(Boolean(videoAddon)),
+      buyer_email: email || "",
       listing_vin: listing?.vin || "",
       listing_model: listing?.model || "",
       listing_year: listing?.year || "",
       listing_zip: listing?.zip || "",
       listing_state: listing?.state || "",
-      buyer_email: email || "",
+      addons_history: String(listing?.addons?.history || "none"),
+      addons_video: String(Boolean(listing?.addons?.videoAddon)),
+      addons_fb_marketplace: String(Boolean(listing?.addons?.fbMarketplace)),
+      addons_fb_groups: String(Number(listing?.addons?.fbGroups || 0)),
+      addons_sms: String(Boolean(listing?.addons?.sms)),
+      cash_offer: String(Boolean(listing?.addons?.cashOffer)),
+      notify: String(listing?.notify || "email"),
     };
 
     const intent = await stripe.paymentIntents.create({
@@ -80,21 +101,25 @@ app.post("/api/create-payment-intent", async (req, res) => {
 
 /**
  * Update PaymentIntent amount
- * Body: { paymentIntentId, plan, videoAddon }
+ * Body: { paymentIntentId, listing }
  * Returns: { ok: true }
  */
 app.post("/api/update-payment-intent", async (req, res) => {
   try {
-    const { paymentIntentId, plan, videoAddon } = req.body || {};
+    const { paymentIntentId, listing } = req.body || {};
     if (!paymentIntentId) return res.status(400).json({ error: "Missing paymentIntentId" });
 
-    const { amount } = computeTotalAmount({ plan, videoAddon: Boolean(videoAddon) });
+    const { amount } = computeTotalAmount(listing);
 
     await stripe.paymentIntents.update(paymentIntentId, {
       amount,
       metadata: {
-        plan: String(plan),
-        videoAddon: String(Boolean(videoAddon)),
+        addons_history: String(listing?.addons?.history || "none"),
+        addons_video: String(Boolean(listing?.addons?.videoAddon)),
+        addons_fb_marketplace: String(Boolean(listing?.addons?.fbMarketplace)),
+        addons_fb_groups: String(Number(listing?.addons?.fbGroups || 0)),
+        addons_sms: String(Boolean(listing?.addons?.sms)),
+        notify: String(listing?.notify || "email"),
       },
     });
 

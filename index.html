@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <title>Only Used Tesla — Ad Checkout Demo (Video + Embedded Payments)</title>
+  <title>Only Used Tesla — Checkout Demo (v5 Pricing)</title>
   <link rel="stylesheet" href="styles.css" />
 
   <!-- Stripe.js (only used when you provide a publishable key + backend endpoints) -->
@@ -31,7 +31,7 @@
         <div class="brand-mark" aria-hidden="true">T</div>
         <div class="brand-text">
           <div class="brand-name">Only Used Tesla</div>
-          <div class="brand-sub">Video + embedded payments demo (mobile)</div>
+          <div class="brand-sub">Seller checkout demo (pricing + add-ons)</div>
         </div>
       </div>
 
@@ -43,9 +43,9 @@
     <div class="stepper-shell" aria-label="Progress">
       <div class="stepper-pill" role="group" aria-label="Checkout steps">
         <ol class="stepper" data-stepper>
-          <li class="stepper-step" data-step-index="1"><span class="step-circle">1</span><span class="step-label">Type</span></li>
+          <li class="stepper-step" data-step-index="1"><span class="step-circle">1</span><span class="step-label">Start</span></li>
           <li class="stepper-step" data-step-index="2"><span class="step-circle">2</span><span class="step-label">Details</span></li>
-          <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Preview</span></li>
+          <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Add‑ons</span></li>
           <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Pay</span></li>
           <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Publish</span></li>
         </ol>
@@ -56,57 +56,48 @@
       <!-- Step 1 -->
       <section class="step is-active" data-step="1" aria-labelledby="s1-title">
         <div class="card">
-          <h1 id="s1-title">Create a listing</h1>
+          <h1 id="s1-title">Create your ad</h1>
           <p class="muted">
-            Quick setup now, polish later. We’ll guide you and save your progress as you go.
+            Quick, Tesla-only listing. We’ll guide you and keep it simple on mobile.
           </p>
         </div>
 
         <div class="card">
-          <h2 class="h2">Choose listing type</h2>
-          <p class="muted">Pick what you want to do today. You can change this before you pay.</p>
-
-          <div class="segmented" role="radiogroup" aria-label="Listing type">
-            <button class="seg-btn is-selected" type="button" role="radio" aria-checked="true" data-choice="sell">Sell my Tesla</button>
-            <button class="seg-btn" type="button" role="radio" aria-checked="false" data-choice="boost">Boost an existing listing</button>
+          <div class="plan-card" role="group" aria-label="Base package">
+            <div class="plan-card-left">
+              <div class="plan-card-title">Basic Ad</div>
+              <div class="plan-card-sub">Valid for 30 days</div>
+              <ul class="plan-card-list">
+                <li>Listed on OnlyUsedTesla.com</li>
+                <li>Buyer leads delivered to you</li>
+                <li>Queued for a brief review after payment</li>
+              </ul>
+            </div>
+            <div class="plan-card-right">
+              <div class="plan-card-price">$27</div>
+              <div class="muted small">one-time</div>
+            </div>
           </div>
 
           <div class="divider"></div>
 
           <div class="toggle-row">
             <div>
-              <div class="row-title">List on onlyusedtesla.com</div>
-              <div class="row-sub">Your listing will appear in search results.</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" data-field="listOnSite" checked />
-              <span class="switch-ui" aria-hidden="true"></span>
-              <span class="sr-only">List on onlyusedtesla.com</span>
-            </label>
-          </div>
-
-          <div class="toggle-row">
-            <div>
-              <div class="row-title">Boost with an ad <span class="pill">Recommended</span></div>
-              <div class="row-sub">Get more eyes on your listing faster.</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" data-field="boostWithAd" checked />
-              <span class="switch-ui" aria-hidden="true"></span>
-              <span class="sr-only">Boost with an ad</span>
-            </label>
-          </div>
-
-          <div class="toggle-row">
-            <div>
-              <div class="row-title">Include Cash Offer</div>
-              <div class="row-sub">Request an offer if you’d like a quick sale.</div>
+              <div class="row-title">Want a cash offer from our dealer network?</div>
+              <div class="row-sub">No pressure. You can still sell privately.</div>
             </div>
             <label class="switch">
               <input type="checkbox" data-field="cashOffer" />
               <span class="switch-ui" aria-hidden="true"></span>
-              <span class="sr-only">Include Cash Offer</span>
+              <span class="sr-only">Cash offer</span>
             </label>
+          </div>
+
+          <div class="callout soft">
+            <div class="callout-title">Pro tip</div>
+            <div class="muted">
+              The fastest-selling ads usually include a clear summary + a short walk‑around video.
+            </div>
           </div>
         </div>
 
@@ -127,7 +118,7 @@
         <div class="card">
           <h1 id="s2-title">Listing details</h1>
           <p class="muted">
-            Keep it simple. A solid summary and accurate basics are enough to run an ad.
+            Your basics + a good summary are enough to publish. Photos and video are optional.
           </p>
         </div>
 
@@ -135,7 +126,7 @@
           <div class="media-head">
             <div>
               <h2 class="h2">Media (optional)</h2>
-              <p class="muted">Photos help. Video helps even more — and you can add it later.</p>
+              <p class="muted">Upload now, or add it later — your ad can still run.</p>
             </div>
             <div class="media-counts muted">
               Photos: <strong data-photo-count>0</strong>/20 · Videos: <strong data-video-count>0</strong>/1
@@ -167,20 +158,20 @@
               <div class="callout-title">Best results</div>
               <ul class="callout-list">
                 <li>Walk around once (a simple 360°), keep the car centered</li>
-                <li>Landscape works best · steady hands · good lighting</li>
+                <li>Good light + steady hands = better leads</li>
                 <li>Keep it under <strong>60 seconds</strong> so it loads fast</li>
               </ul>
             </div>
 
             <div class="toggle-row">
               <div>
-                <div class="row-title">Video showcase (HD, up to 1 minute)</div>
-                <div class="row-sub">Adds processing + hosting. <strong>+$19</strong></div>
+                <div class="row-title">Add 1‑minute HD video (360 walk‑around)</div>
+                <div class="row-sub">Processing + hosting. <strong>+$20</strong></div>
               </div>
               <label class="switch">
                 <input type="checkbox" data-field="videoAddon" />
                 <span class="switch-ui" aria-hidden="true"></span>
-                <span class="sr-only">Video showcase add-on</span>
+                <span class="sr-only">Video add-on</span>
               </label>
             </div>
 
@@ -205,7 +196,7 @@
               </div>
 
               <div class="field-hint">
-                If you’d rather upload later, that’s totally fine — keep going and we’ll save your progress.
+                Upload is optional. If you select the video add‑on without uploading, you can add it later.
               </div>
             </div>
           </div>
@@ -250,7 +241,7 @@
               <label for="year">Year <span class="req">*</span></label>
               <select id="year" data-field="year" autocomplete="off">
                 <option value="">Select…</option>
-                <option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option>
+                <option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option>
                 <option>2020</option><option>2019</option><option>2018</option><option>2017</option><option>2016</option>
                 <option>2015</option><option>2014</option><option>2013</option><option>2012</option>
               </select>
@@ -340,10 +331,10 @@
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 2 of 5 — Almost there.
+              Step 2 of 5 — You’re doing great. Keep it simple.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
-              Preview your ad
+              Choose add‑ons
             </button>
           </div>
         </div>
@@ -352,84 +343,158 @@
       <!-- Step 3 -->
       <section class="step" data-step="3" aria-labelledby="s3-title">
         <div class="card">
-          <h1 id="s3-title">Preview your ad</h1>
+          <h1 id="s3-title">Add‑ons &amp; distribution</h1>
           <p class="muted">
-            This is what buyers will see. Looks good? Choose a package and continue to payment.
+            Optional upgrades that can help you sell faster. You can edit any of these on the payment screen.
           </p>
         </div>
 
         <div class="card">
-          <h2 class="h2">Your ad preview</h2>
+          <h2 class="h2">Vehicle history report</h2>
+          <p class="muted">Adds a trust badge to your ad. Requires a valid VIN.</p>
 
-          <div class="ad-preview" data-ad-preview>
-            <div class="ad-preview-title" data-ad-title>—</div>
-            <div class="ad-preview-sub" data-ad-sub>—</div>
-            <div class="ad-preview-body" data-ad-body>—</div>
-            <div class="ad-preview-meta">
-              <span class="meta-pill" data-ad-vin>VIN —</span>
-              <span class="meta-pill" data-ad-ap>Autopilot —</span>
-              <span class="meta-pill" data-ad-video>Video —</span>
-            </div>
+          <div class="choice-grid" role="radiogroup" aria-label="History report">
+            <button class="choice is-selected" type="button" role="radio" aria-checked="true" data-history="none">
+              <div class="choice-top">
+                <div class="choice-name">No report</div>
+                <div class="choice-price">$0</div>
+              </div>
+              <div class="choice-sub">Skip for now</div>
+            </button>
+
+            <button class="choice" type="button" role="radio" aria-checked="false" data-history="autocheck">
+              <div class="choice-top">
+                <div class="choice-name">Add AutoCheck</div>
+                <div class="choice-price">+$20</div>
+              </div>
+              <div class="choice-sub">Vehicle history report</div>
+            </button>
+
+            <button class="choice" type="button" role="radio" aria-checked="false" data-history="carfax">
+              <div class="choice-top">
+                <div class="choice-name">Add CARFAX</div>
+                <div class="choice-price">+$20</div>
+              </div>
+              <div class="choice-sub">Vehicle history report</div>
+            </button>
           </div>
 
-          <div class="inline-actions">
-            <button class="btn btn-ghost btn-block" type="button" data-edit-details>Edit details</button>
+          <div class="field-hint">
+            If a report can’t be generated for your VIN, you won’t be charged for it.
           </div>
 
           <div class="divider"></div>
 
-          <h2 class="h2">Choose an ad package</h2>
-          <p class="muted">Tap a package to select it. You can still change this on the payment screen.</p>
+          <h2 class="h2">Video</h2>
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Add 1‑minute HD video (360 walk‑around)</div>
+              <div class="row-sub">Processing + hosting. <strong>+$20</strong></div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="videoAddon" />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Video add-on</span>
+            </label>
+          </div>
+          <div class="muted small" data-video-status>
+            No video uploaded yet. You can add one now or later.
+          </div>
 
-          <div class="plan-grid" role="radiogroup" aria-label="Ad packages">
-            <button class="plan is-selected" type="button" role="radio" aria-checked="true" data-plan="standard">
-              <div class="plan-top">
-                <div class="plan-name">Standard</div>
-                <div class="plan-price">$49</div>
-              </div>
-              <div class="plan-sub">7 days · Great for most sellers</div>
-              <ul class="plan-list">
-                <li>Featured placement</li>
-                <li>Category targeting</li>
-                <li>Basic reporting</li>
-              </ul>
-            </button>
+          <div class="divider"></div>
 
-            <button class="plan" type="button" role="radio" aria-checked="false" data-plan="pro">
-              <div class="plan-top">
-                <div class="plan-name">Pro</div>
-                <div class="plan-price">$89</div>
-              </div>
-              <div class="plan-sub">14 days · More visibility</div>
-              <ul class="plan-list">
-                <li>Higher placement</li>
-                <li>More impressions</li>
-                <li>Performance tips</li>
-              </ul>
-            </button>
+          <h2 class="h2">Facebook posting</h2>
 
-            <button class="plan" type="button" role="radio" aria-checked="false" data-plan="max">
-              <div class="plan-top">
-                <div class="plan-name">Max</div>
-                <div class="plan-price">$149</div>
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Post my ad to Facebook Marketplace</div>
+              <div class="row-sub">Posting service. <strong>+$25</strong> (valid 7 days)</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="fbMarketplace" />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Facebook Marketplace posting</span>
+            </label>
+          </div>
+
+          <div class="groups">
+            <div class="groups-head">
+              <div>
+                <div class="row-title">Post to Facebook buy/sell groups</div>
+                <div class="row-sub">$10 per group · Choose 0–5 groups</div>
               </div>
-              <div class="plan-sub">30 days · Best value</div>
-              <ul class="plan-list">
-                <li>Top placement boost</li>
-                <li>Largest reach</li>
-                <li>Priority support</li>
-              </ul>
-            </button>
+              <div class="groups-total" data-groups-total>$0</div>
+            </div>
+
+            <div class="qty" aria-label="Facebook group quantity">
+              <button class="qty-btn" type="button" data-groups-dec aria-label="Decrease groups">−</button>
+              <div class="qty-value" aria-live="polite"><span data-groups-count>0</span> groups</div>
+              <button class="qty-btn" type="button" data-groups-inc aria-label="Increase groups">+</button>
+            </div>
+
+            <div class="field-hint">
+              You’ll provide group links (or city + group names) after checkout.
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2 class="h2">Notifications</h2>
+
+          <div class="toggle-row">
+            <div>
+              <div class="row-title">Text notifications</div>
+              <div class="row-sub">Get leads by text. <strong>+$5</strong></div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-field="sms" />
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span class="sr-only">Text notifications</span>
+            </label>
+          </div>
+
+          <div class="sms-panel" data-sms-panel hidden>
+            <div class="field" data-validate="phone">
+              <label for="phone">Mobile number</label>
+              <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123‑4567" data-field="phone" />
+              <div class="field-hint">We’ll send a one‑time code to verify it’s you.</div>
+              <div class="field-msg" data-msg></div>
+            </div>
+
+            <div class="otp">
+              <button class="btn btn-ghost btn-block" type="button" data-otp-send>
+                Send code
+              </button>
+
+              <div class="otp-row" data-otp-row hidden>
+                <input class="otp-input" type="text" inputmode="numeric" maxlength="6" placeholder="Enter 6‑digit code" data-field="otp" />
+                <button class="btn btn-primary" type="button" data-otp-verify>Verify</button>
+              </div>
+
+              <div class="muted small" data-otp-hint></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2 class="h2">Notify me when my ad is live</h2>
+          <div class="segmented segmented-3" role="radiogroup" aria-label="Notify when live">
+            <button class="seg-btn is-selected" type="button" role="radio" aria-checked="true" data-notify="email">Email</button>
+            <button class="seg-btn" type="button" role="radio" aria-checked="false" data-notify="text">Text</button>
+            <button class="seg-btn" type="button" role="radio" aria-checked="false" data-notify="both">Both</button>
+          </div>
+          <div class="field-hint" data-notify-hint>
+            Email is the fastest option.
           </div>
         </div>
 
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 3 of 5 — Looks good.
+              Step 3 of 5 — Optional upgrades.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
-              Continue to payment
+              Review &amp; pay
             </button>
           </div>
         </div>
@@ -438,44 +503,28 @@
       <!-- Step 4 -->
       <section class="step" data-step="4" aria-labelledby="s4-title">
         <div class="card">
-          <h1 id="s4-title">Pay &amp; publish</h1>
+          <h1 id="s4-title">Review &amp; payment</h1>
           <p class="muted">
-            Review what you’re buying from Only Used Tesla, then pay securely right here. After payment, your ad is submitted for a brief review and should be live soon.
+            Review what you’re buying from Only Used Tesla, then pay securely right here.
           </p>
         </div>
 
         <div class="card">
           <h2 class="h2">Your order</h2>
 
-          <div class="order">
+          <div class="order" aria-label="Order summary">
             <div class="order-row">
               <div>
-                <div class="order-title" data-order-plan>Standard</div>
-                <div class="order-sub" data-order-plan-sub>7 days</div>
+                <div class="order-title">Basic Ad</div>
+                <div class="order-sub">30 days</div>
               </div>
-
               <div class="order-right">
-                <div class="order-amt" data-order-price>$49.00</div>
-                <button class="link-btn link-btn-tight" type="button" data-open-plan>
-                  Change
-                </button>
+                <div class="order-amt">$27.00</div>
               </div>
             </div>
 
-            <div class="order-row" data-video-line hidden>
-              <div>
-                <div class="order-title">Video showcase</div>
-                <div class="order-sub">HD processing + hosting (up to 1 min)</div>
-              </div>
-
-              <div class="order-right">
-                <div class="order-amt" data-video-price>$19.00</div>
-                <label class="switch">
-                  <input type="checkbox" data-field="videoAddon" />
-                  <span class="switch-ui" aria-hidden="true"></span>
-                  <span class="sr-only">Video showcase add-on</span>
-                </label>
-              </div>
+            <div class="order-lines" data-order-lines>
+              <!-- injected by JS -->
             </div>
 
             <div class="order-row order-row-muted">
@@ -485,12 +534,12 @@
 
             <div class="order-row order-total">
               <div>Total</div>
-              <div data-order-total>$49.00</div>
+              <div data-order-total>$27.00</div>
             </div>
 
             <div class="inline-actions">
-              <button class="btn btn-ghost btn-block" type="button" data-edit-media>
-                Edit photos / video
+              <button class="btn btn-ghost btn-block" type="button" data-edit-order>
+                Edit order
               </button>
             </div>
           </div>
@@ -534,7 +583,6 @@
           </div>
 
           <div class="payment-shell" data-payment-shell hidden>
-            <div class="wallet-row" id="express-checkout-element" hidden></div>
             <div id="payment-element" class="stripe-mount"></div>
             <div class="stripe-error" data-stripe-error aria-live="polite"></div>
             <div class="stripe-foot">
@@ -574,13 +622,13 @@
 
           <div class="receipt">
             <div class="receipt-row"><span>Reference</span><strong data-ref>OUT‑DEMO‑0001</strong></div>
-            <div class="receipt-row"><span>Package</span><strong data-receipt-plan>Standard</strong></div>
-            <div class="receipt-row"><span>Total</span><strong data-receipt-total>$49.00</strong></div>
+            <div class="receipt-row"><span>Total</span><strong data-receipt-total>$27.00</strong></div>
+            <div class="receipt-row"><span>Notify when live</span><strong data-receipt-notify>Email</strong></div>
           </div>
 
           <div class="btn-row">
             <button class="btn btn-primary btn-block" type="button" data-start-over>
-              Create another listing
+              Create another ad
             </button>
             <button class="btn btn-ghost btn-block" type="button" data-view-dashboard>
               Manage my ad (demo)
@@ -593,10 +641,10 @@
           <ol class="next-steps">
             <li><strong>Receipt + sign‑in link</strong> arrives by email.</li>
             <li><strong>Brief review</strong> helps keep listings accurate and safe.</li>
-            <li><strong>Your ad goes live</strong> as soon as the listing is approved.</li>
+            <li><strong>Your ad goes live</strong> as soon as it’s approved.</li>
           </ol>
           <div class="muted small">
-            Tip: The fastest listings mention battery health, wheel/tire condition, and any warranty coverage.
+            Tip: Great listings mention battery health, wheels/tires, and title status.
           </div>
         </div>
       </section>
@@ -604,7 +652,7 @@
 
     <footer class="footer" role="contentinfo">
       <div class="footer-inner">
-        <div class="muted small">Only Used Tesla · Video + embedded payments demo UI</div>
+        <div class="muted small">Only Used Tesla · Checkout demo v5 (pricing + add‑ons)</div>
         <button class="link-btn" type="button" data-reset-draft>Reset demo data</button>
       </div>
     </footer>
@@ -616,7 +664,7 @@
       <div class="dialog-head">
         <div>
           <div class="dialog-title">Need a hand?</div>
-          <div class="muted">This is a demo flow. In production, this can open live chat or a help center.</div>
+          <div class="muted">This is a demo checkout flow with optional add‑ons.</div>
         </div>
         <button class="icon-btn" value="cancel" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -625,11 +673,12 @@
 
       <div class="dialog-body">
         <div class="callout">
-          <div class="callout-title">Checkout goals</div>
+          <div class="callout-title">Goals</div>
           <ul class="callout-list">
-            <li>Big buttons (min 52px), sticky bottom CTA</li>
-            <li>Order summary + edit right on the payment screen</li>
-            <li>Optional 1-minute HD video add-on (+$19)</li>
+            <li>Big buttons (fat‑finger friendly)</li>
+            <li>VIN validation + friendly messaging</li>
+            <li>Optional video, history report, Facebook posting</li>
+            <li>SMS notifications with OTP verification</li>
             <li>Embedded Stripe payment form (Payment Element)</li>
           </ul>
         </div>
@@ -641,13 +690,13 @@
     </form>
   </dialog>
 
-  <!-- Plan change dialog -->
-  <dialog class="dialog" data-plan-dialog>
+  <!-- Order edit dialog (Step 4) -->
+  <dialog class="dialog" data-order-dialog>
     <form method="dialog" class="dialog-card">
       <div class="dialog-head">
         <div>
-          <div class="dialog-title">Change ad package</div>
-          <div class="muted">Pick what fits your timeline. You can upgrade any time.</div>
+          <div class="dialog-title">Edit order</div>
+          <div class="muted">Update add‑ons without leaving payment.</div>
         </div>
         <button class="icon-btn" value="cancel" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -655,34 +704,85 @@
       </div>
 
       <div class="dialog-body">
-        <div class="plan-grid" role="radiogroup" aria-label="Ad packages (payment screen)">
-          <button class="plan is-selected" type="button" role="radio" aria-checked="true" data-plan-dialog-choice="standard">
-            <div class="plan-top">
-              <div class="plan-name">Standard</div>
-              <div class="plan-price">$49</div>
-            </div>
-            <div class="plan-sub">7 days · Great for most sellers</div>
-          </button>
+        <div class="mini-section">
+          <div class="mini-title">History report</div>
+          <div class="choice-grid" role="radiogroup" aria-label="History report (edit)">
+            <button class="choice is-selected" type="button" role="radio" aria-checked="true" data-history="none">
+              <div class="choice-top"><div class="choice-name">No report</div><div class="choice-price">$0</div></div>
+              <div class="choice-sub">Skip for now</div>
+            </button>
+            <button class="choice" type="button" role="radio" aria-checked="false" data-history="autocheck">
+              <div class="choice-top"><div class="choice-name">AutoCheck</div><div class="choice-price">+$20</div></div>
+              <div class="choice-sub">History badge</div>
+            </button>
+            <button class="choice" type="button" role="radio" aria-checked="false" data-history="carfax">
+              <div class="choice-top"><div class="choice-name">CARFAX</div><div class="choice-price">+$20</div></div>
+              <div class="choice-sub">History badge</div>
+            </button>
+          </div>
+        </div>
 
-          <button class="plan" type="button" role="radio" aria-checked="false" data-plan-dialog-choice="pro">
-            <div class="plan-top">
-              <div class="plan-name">Pro</div>
-              <div class="plan-price">$89</div>
-            </div>
-            <div class="plan-sub">14 days · More visibility</div>
-          </button>
+        <div class="divider"></div>
 
-          <button class="plan" type="button" role="radio" aria-checked="false" data-plan-dialog-choice="max">
-            <div class="plan-top">
-              <div class="plan-name">Max</div>
-              <div class="plan-price">$149</div>
+        <div class="toggle-row">
+          <div>
+            <div class="row-title">Video showcase</div>
+            <div class="row-sub">1‑minute HD video. <strong>+$20</strong></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" data-field="videoAddon" />
+            <span class="switch-ui" aria-hidden="true"></span>
+            <span class="sr-only">Video showcase</span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="row-title">Facebook Marketplace posting</div>
+            <div class="row-sub">Posting service. <strong>+$25</strong></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" data-field="fbMarketplace" />
+            <span class="switch-ui" aria-hidden="true"></span>
+            <span class="sr-only">Facebook Marketplace posting</span>
+          </label>
+        </div>
+
+        <div class="groups">
+          <div class="groups-head">
+            <div>
+              <div class="row-title">Facebook groups</div>
+              <div class="row-sub">$10 per group · 0–5</div>
             </div>
-            <div class="plan-sub">30 days · Best value</div>
-          </button>
+            <div class="groups-total" data-groups-total>$0</div>
+          </div>
+          <div class="qty" aria-label="Facebook groups quantity (edit)">
+            <button class="qty-btn" type="button" data-groups-dec aria-label="Decrease groups">−</button>
+            <div class="qty-value" aria-live="polite"><span data-groups-count>0</span> groups</div>
+            <button class="qty-btn" type="button" data-groups-inc aria-label="Increase groups">+</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="row-title">Text notifications</div>
+            <div class="row-sub">Get leads by text. <strong>+$5</strong></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" data-field="sms" />
+            <span class="switch-ui" aria-hidden="true"></span>
+            <span class="sr-only">Text notifications</span>
+          </label>
+        </div>
+
+        <div class="mini-note">
+          Need to verify your mobile number? You can do that on the add‑ons step.
         </div>
 
         <div class="dialog-actions">
-          <button class="btn btn-ghost btn-block" value="cancel">Done</button>
+          <button class="btn btn-primary btn-block" value="ok">Done</button>
         </div>
       </div>
     </form>
