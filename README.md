@@ -36,3 +36,7 @@ This demo includes scaffolding for:
 ## UX change (v7)
 - Photos & video are collected **after checkout** (optional) to keep the listing form fast on mobile.
 - Supports up to **50 photos** in the demo counter.
+
+
+## v8 note
+This prototype makes it explicit that **photos & video are added after payment** (Step 5), to keep typing fast for sellers who upload 40–50 photos.

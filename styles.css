@@ -716,3 +716,21 @@ p{ margin: 0 0 10px; }
   white-space:nowrap;
   border:0;
 }
+
+
+/* v8: Media clarity */
+.stepper-sub{
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.plan-note{
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.cta-subhint{
+  margin-top: 6px;
+  font-size: 13px;
+}

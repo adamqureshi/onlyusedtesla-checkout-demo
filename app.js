@@ -146,6 +146,9 @@
       el.classList.toggle("is-complete", i < state.step);
     });
 
+    updateStepperSub();
+    updateCtaSubhint();
+
     $$("[data-cta-hint]").forEach((el) => {
       el.textContent = `Step ${state.step} of 5 — ${hintForStep(state.step)}`;
     });
@@ -179,6 +182,28 @@
       case 5: return "Submitted. Nice work.";
       default: return "";
     }
+
+  function updateStepperSub() {
+    const el = $("[data-stepper-sub]");
+    if (!el) return;
+    if (state.step < 5) {
+      el.textContent = "Photos & video are optional — you’ll upload after payment (Step 5).";
+    } else {
+      el.textContent = "Now you can upload photos & video (optional).";
+    }
+  }
+
+  function updateCtaSubhint() {
+    const el = $("[data-cta-subhint]");
+    if (!el) return;
+    if (state.step === 4) {
+      el.textContent = "Next: upload photos & video (optional).";
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   }
 
   // ---------- Validation helpers ----------
