@@ -47,7 +47,7 @@
           <li class="stepper-step" data-step-index="2"><span class="step-circle">2</span><span class="step-label">Details</span></li>
           <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Add‑ons</span></li>
           <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Pay</span></li>
-          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Publish</span></li>
+          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Finish</span></li>
         </ol>
       </div>
     </div>
@@ -118,91 +118,19 @@
         <div class="card">
           <h1 id="s2-title">Listing details</h1>
           <p class="muted">
-            Your basics + a good summary are enough to publish. Photos and video are optional.
+            Your basics + a good summary are enough to submit. To keep things fast on mobile, add photos and video after checkout (optional).
           </p>
         </div>
 
+        
         <div class="card">
-          <div class="media-head">
-            <div>
-              <h2 class="h2">Media (optional)</h2>
-              <p class="muted">Upload now, or add it later — your ad can still run.</p>
-            </div>
-            <div class="media-counts muted">
-              Photos: <strong data-photo-count>0</strong>/20 · Videos: <strong data-video-count>0</strong>/1
-            </div>
-          </div>
-
-          <div class="segmented segmented-mini" role="tablist" aria-label="Media tabs">
-            <button class="seg-btn is-selected" type="button" role="tab" aria-selected="true" data-media-tab="photos">Photos</button>
-            <button class="seg-btn" type="button" role="tab" aria-selected="false" data-media-tab="video">Video (1 min)</button>
-          </div>
-
-          <!-- Photos tab -->
-          <div class="tab-panel is-active" role="tabpanel" data-media-panel="photos">
-            <label class="upload">
-              <input type="file" accept="image/*" multiple data-photos />
-              <span class="upload-box" role="button" tabindex="0">
-                <span class="upload-title">Add photos</span>
-                <span class="upload-sub">Tap to choose from your phone</span>
-              </span>
-            </label>
-            <div class="field-hint">
-              Tip: 8–12 photos performs great (front, back, wheels, interior, screen, trunk).
-            </div>
-          </div>
-
-          <!-- Video tab -->
-          <div class="tab-panel" role="tabpanel" data-media-panel="video">
-            <div class="callout soft">
-              <div class="callout-title">Best results</div>
-              <ul class="callout-list">
-                <li>Walk around once (a simple 360°), keep the car centered</li>
-                <li>Good light + steady hands = better leads</li>
-                <li>Keep it under <strong>60 seconds</strong> so it loads fast</li>
-              </ul>
-            </div>
-
-            <div class="toggle-row">
-              <div>
-                <div class="row-title">Add 1‑minute HD video (360 walk‑around)</div>
-                <div class="row-sub">Processing + hosting. <strong>+$20</strong></div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" data-field="videoAddon" />
-                <span class="switch-ui" aria-hidden="true"></span>
-                <span class="sr-only">Video add-on</span>
-              </label>
-            </div>
-
-            <div class="video-uploader" data-video-uploader>
-              <label class="upload">
-                <input type="file" accept="video/*" capture="environment" data-video />
-                <span class="upload-box upload-box-video" role="button" tabindex="0">
-                  <span class="upload-title">Add video</span>
-                  <span class="upload-sub">Record or choose a video (1 minute max)</span>
-                </span>
-              </label>
-
-              <div class="video-msg" data-video-msg aria-live="polite"></div>
-
-              <div class="video-preview" data-video-preview hidden>
-                <video class="video-player" controls playsinline></video>
-                <div class="video-meta muted small" data-video-meta>—</div>
-                <div class="btn-row">
-                  <button class="btn btn-ghost btn-block" type="button" data-video-replace>Replace video</button>
-                  <button class="btn btn-ghost btn-block" type="button" data-video-remove>Remove video</button>
-                </div>
-              </div>
-
-              <div class="field-hint">
-                Upload is optional. If you select the video add‑on without uploading, you can add it later.
-              </div>
-            </div>
-          </div>
+          <h2 class="h2">Photos &amp; video</h2>
+          <p class="muted">
+            Tip: Uploading 40–50 photos can slow typing on some phones. You can pay first, then add photos and video right after checkout.
+          </p>
         </div>
 
-        <div class="card">
+<div class="card">
           <h2 class="h2">Basics</h2>
 
           <div class="grid">
@@ -652,6 +580,88 @@
             </button>
           </div>
         </div>
+
+        <div class="card">
+          <div class="media-head">
+            <div>
+              <h2 class="h2">Add photos (optional)</h2>
+              <p class="muted">Upload now, or add it later — your ad can still run.</p>
+            </div>
+            <div class="media-counts muted">
+              Photos: <strong data-photo-count>0</strong>/20 · Videos: <strong data-video-count>0</strong>/1
+            </div>
+          </div>
+
+          <div class="segmented segmented-mini" role="tablist" aria-label="Media tabs">
+            <button class="seg-btn is-selected" type="button" role="tab" aria-selected="true" data-media-tab="photos">Photos</button>
+            <button class="seg-btn" type="button" role="tab" aria-selected="false" data-media-tab="video">Video (1 min)</button>
+          </div>
+
+          <!-- Photos tab -->
+          <div class="tab-panel is-active" role="tabpanel" data-media-panel="photos">
+            <label class="upload">
+              <input type="file" accept="image/*" multiple data-photos />
+              <span class="upload-box" role="button" tabindex="0">
+                <span class="upload-title">Add photos</span>
+                <span class="upload-sub">Tap to choose from your phone (you can do this later)</span>
+              </span>
+            </label>
+            <div class="field-hint">
+              Tip: 8–12 photos performs great (front, back, wheels, interior, screen, trunk).
+            </div>
+          </div>
+
+          <!-- Video tab -->
+          <div class="tab-panel" role="tabpanel" data-media-panel="video">
+            <div class="callout soft">
+              <div class="callout-title">Best results</div>
+              <ul class="callout-list">
+                <li>Walk around once (a simple 360°), keep the car centered</li>
+                <li>Good light + steady hands = better leads</li>
+                <li>Keep it under <strong>60 seconds</strong> so it loads fast</li>
+              </ul>
+            </div>
+
+            <div class="toggle-row">
+              <div>
+                <div class="row-title">Add 1‑minute HD video (360 walk‑around)</div>
+                <div class="row-sub">Processing + hosting. <strong>+$20</strong></div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-field="videoAddon" />
+                <span class="switch-ui" aria-hidden="true"></span>
+                <span class="sr-only">Video add-on</span>
+              </label>
+            </div>
+
+            <div class="video-uploader" data-video-uploader>
+              <label class="upload">
+                <input type="file" accept="video/*" capture="environment" data-video />
+                <span class="upload-box upload-box-video" role="button" tabindex="0">
+                  <span class="upload-title">Add video</span>
+                  <span class="upload-sub">Record or choose a video (1 minute max)</span>
+                </span>
+              </label>
+
+              <div class="video-msg" data-video-msg aria-live="polite"></div>
+
+              <div class="video-preview" data-video-preview hidden>
+                <video class="video-player" controls playsinline></video>
+                <div class="video-meta muted small" data-video-meta>—</div>
+                <div class="btn-row">
+                  <button class="btn btn-ghost btn-block" type="button" data-video-replace>Replace video</button>
+                  <button class="btn btn-ghost btn-block" type="button" data-video-remove>Remove video</button>
+                </div>
+              </div>
+
+              <div class="field-hint">
+                Upload is optional. If you select the video add‑on without uploading, you can add it later.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
 
         <div class="card">
           <h2 class="h2">What happens next</h2>

@@ -1,5 +1,5 @@
 /**
- * Only Used Tesla — Demo v5 (Pricing + Add-ons)
+ * Only Used Tesla — Demo v7 (Pay first, add media after checkout)
  * --------------------------------------------
  * Pricing:
  * - Basic Ad: $27 (30 days)
@@ -980,7 +980,7 @@ function updateNotifyUI() {
     if (photosInput) {
       photosInput.addEventListener("change", () => {
         const files = photosInput.files ? Array.from(photosInput.files) : [];
-        state.media.photoCount = Math.min(20, files.length);
+        state.media.photoCount = Math.min(50, files.length);
         updateMediaCounts();
         save(true);
       });

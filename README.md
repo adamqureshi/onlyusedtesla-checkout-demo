@@ -31,3 +31,8 @@ This demo includes scaffolding for:
 
 ## Listing attribute
 - **Full Self‑Driving (FSD)**: Not included / Subscription / Paid upfront (stays with car)
+
+
+## UX change (v7)
+- Photos & video are collected **after checkout** (optional) to keep the listing form fast on mobile.
+- Supports up to **50 photos** in the demo counter.
