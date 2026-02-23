@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <title>Only Used Tesla — Checkout Demo (v5 Pricing)</title>
+  <title>Only Used Tesla — Checkout Demo (v9 Preview)</title>
   <link rel="stylesheet" href="styles.css" />
 
   <!-- Stripe.js (only used when you provide a publishable key + backend endpoints) -->
@@ -46,10 +46,11 @@
           <li class="stepper-step" data-step-index="1"><span class="step-circle">1</span><span class="step-label">Start</span></li>
           <li class="stepper-step" data-step-index="2"><span class="step-circle">2</span><span class="step-label">Details</span></li>
           <li class="stepper-step" data-step-index="3"><span class="step-circle">3</span><span class="step-label">Add‑ons</span></li>
-          <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Pay</span></li>
-          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Upload</span></li>
+          <li class="stepper-step" data-step-index="4"><span class="step-circle">4</span><span class="step-label">Preview</span></li>
+          <li class="stepper-step" data-step-index="5"><span class="step-circle">5</span><span class="step-label">Pay</span></li>
+          <li class="stepper-step" data-step-index="6"><span class="step-circle">6</span><span class="step-label">Upload</span></li>
         </ol>
-        <div class="stepper-sub muted" data-stepper-sub>Photos &amp; video are optional — you’ll upload after payment (Step 5).</div>
+        <div class="stepper-sub muted" data-stepper-sub>Photos &amp; video are optional — you’ll upload after payment (Step 6).</div>
       </div>
     </div>
 
@@ -106,7 +107,7 @@
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 1 of 5 — You’re off to a great start.
+              Step 1 of 6 — You’re off to a great start.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
               Next
@@ -278,7 +279,7 @@
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 2 of 5 — You’re doing great. Keep it simple.
+              Step 2 of 6 — You’re doing great. Keep it simple.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
               Choose add‑ons
@@ -438,19 +439,97 @@
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 3 of 5 — Optional upgrades.
+              Step 3 of 6 — Optional upgrades.
             </div>
             <button class="btn btn-primary btn-block" type="button" data-next>
-              Review &amp; pay
+              Preview your ad
             </button>
           </div>
         </div>
       </section>
 
+      
       <!-- Step 4 -->
       <section class="step" data-step="4" aria-labelledby="s4-title">
         <div class="card">
-          <h1 id="s4-title">Review &amp; payment</h1>
+          <h1 id="s4-title">Preview your ad</h1>
+          <p class="muted">
+            This is how your listing will look to buyers on Only Used Tesla. Photos and video can be added after checkout (optional).
+          </p>
+          <div class="callout callout-mini">
+            <strong>Tip:</strong> If something looks off, tap <strong>Back</strong> to edit — you won’t lose your progress.
+          </div>
+        </div>
+
+        <div class="preview-grid" aria-label="Ad preview">
+          <div class="card preview-card">
+            <div class="preview-media">
+              <div class="media-placeholder-lg" aria-hidden="true">
+                <div class="ph-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M8 11l2-2 4 4 2-2 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="9" cy="10" r="1.2" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="ph-title">Your photos will appear here</div>
+                <div class="ph-sub">Upload up to 50 photos after checkout (Step 6).</div>
+              </div>
+
+              <div class="preview-thumbs" aria-hidden="true">
+                <div class="thumb"></div>
+                <div class="thumb"></div>
+                <div class="thumb"></div>
+                <div class="thumb"></div>
+                <div class="thumb"></div>
+              </div>
+
+              <div class="preview-note muted" data-preview-media-note>
+                Photos &amp; video are optional. You can add them after payment.
+              </div>
+            </div>
+          </div>
+
+          <div class="card preview-card">
+            <div class="preview-head">
+              <div class="preview-title" data-preview-title>Your Tesla</div>
+              <div class="preview-price" data-preview-price>$—</div>
+            </div>
+
+            <div class="preview-meta muted" data-preview-meta>Location will appear here.</div>
+
+            <div class="badge-row" data-preview-badges aria-label="Vehicle features"></div>
+
+            <div class="divider"></div>
+
+            <h2 class="h2">Description</h2>
+            <p class="preview-summary muted" data-preview-summary>
+              Your description will appear here.
+            </p>
+
+            <div class="divider"></div>
+
+            <h2 class="h2">Key details</h2>
+            <ul class="mini-list" data-preview-facts></ul>
+          </div>
+        </div>
+
+        <div class="sticky-cta">
+          <div class="cta-inner">
+            <div class="cta-hint" aria-live="polite" data-cta-hint>
+              Step 4 of 6 — Quick preview before payment.
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-next>
+              Continue to payment
+            </button>
+          </div>
+        </div>
+      </section>
+
+<!-- Step 5 -->
+      <section class="step" data-step="5" aria-labelledby="s5-title">
+        <div class="card">
+          <h1 id="s5-title">Preview your adment</h1>
           <p class="muted">
             Review what you’re buying from Only Used Tesla, then pay securely right here.
           </p>
@@ -546,7 +625,7 @@
         <div class="sticky-cta">
           <div class="cta-inner">
             <div class="cta-hint" aria-live="polite" data-cta-hint>
-              Step 4 of 5 — Ready to pay.
+              Step 5 of 6 — Ready to pay.
             </div>
             <div class="cta-subhint muted" data-cta-subhint>Next: upload photos &amp; video (optional).</div>
             <button class="btn btn-primary btn-block" type="button" data-pay>
@@ -556,13 +635,13 @@
         </div>
       </section>
 
-      <!-- Step 5 -->
-      <section class="step" data-step="5" aria-labelledby="s5-title">
+      <!-- Step 6 -->
+      <section class="step" data-step="6" aria-labelledby="s6-title">
         <div class="card card-success">
           <div class="success-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h1 id="s5-title">Ad submitted</h1>
+          <h1 id="s6-title">Ad submitted</h1>
           <p class="muted">
             Payment received. Your ad is queued for a brief review and should be live soon.
             We’ll email your receipt and a sign‑in link so you can manage everything without a password.

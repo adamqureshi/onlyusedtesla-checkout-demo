@@ -1,42 +1,32 @@
-# Only Used Tesla — Checkout Demo v5 (Pricing + Add‑ons)
+# Only Used Tesla — Checkout Demo v9 (Ad Preview + Pay, Media After Checkout)
 
-This prototype updates the flow to your new offer:
+This prototype adds a dedicated **Preview** step so sellers can see what their ad will look like **before payment** — even when photos/video are collected **after checkout**.
 
-## Base package
-- **Basic Ad — $27** (valid for 30 days)
+## Flow (mobile-first)
+1. **Start** — Basic Ad ($27) + optional Cash Offer
+2. **Details** — VIN + basics + summary (fast typing; media comes later)
+3. **Add‑ons** — Reports, video add‑on, Facebook posting, SMS, etc.
+4. **Preview** — Buyer-facing preview with a **photo placeholder**
+5. **Pay** — Embedded Stripe Payment Element (demo placeholder)
+6. **Upload** — Add photos (up to 50) + optional 1‑minute video after payment
 
-## Add-ons
-- **Vehicle history report** (radio):
-  - None
-  - AutoCheck +$20
-  - CARFAX +$20
-- **Video showcase** +$20 (1-minute max, optional; upload now or later)
-- **Facebook Marketplace posting** +$25 (valid 7 days)
-- **Facebook group posting** $10 per group (0–5 groups)
-- **Text notifications** +$5 (requires phone + OTP verification in UI)
-- **Notify me when live** (radio): Email / Text / Both (Text requires verified phone)
+## Why “Preview” works with “Media later”
+- Photos/video uploads can slow down typing on some devices.
+- This flow **lets the user pay quickly** with just the essentials.
+- Preview is still useful because it confirms: **title, price, location, Autopilot/FSD, description**.
 
-## Stripe (embedded)
-This demo includes scaffolding for:
-- Stripe.js + **Payment Element**
-- PaymentIntent create/update endpoints (`/api/create-payment-intent`, `/api/update-payment-intent`)
+## Stripe (embedded, no redirect)
+Use **Stripe Payment Element** with a server-created **PaymentIntent**:
+- Server creates PaymentIntent with the total amount (base + add‑ons)
+- Client receives `client_secret`
+- Client mounts Payment Element in the Pay step
 
-> If no Stripe publishable key is set, the demo simulates payment.
+This demo shows where the Payment Element mounts (`#payment-element`).
 
-## Notes
-- VIN validation: 17 chars, excludes I/O/Q
-- Video validation: <= 60 seconds, <= 200MB (adjustable in `app.js`)
-- OTP is a demo flow: code is shown in a toast as **123456**
+---
 
-
-## Listing attribute
-- **Full Self‑Driving (FSD)**: Not included / Subscription / Paid upfront (stays with car)
-
-
-## UX change (v7)
-- Photos & video are collected **after checkout** (optional) to keep the listing form fast on mobile.
-- Supports up to **50 photos** in the demo counter.
-
-
-## v8 note
-This prototype makes it explicit that **photos & video are added after payment** (Step 5), to keep typing fast for sellers who upload 40–50 photos.
+### Files
+- `index.html` — UI + steps
+- `styles.css` — grayscale, fat-finger friendly styling
+- `app.js` — state, validation, step logic, preview rendering
+- `server/` — optional placeholder server notes (demo only)
