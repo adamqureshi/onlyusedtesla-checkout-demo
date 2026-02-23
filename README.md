@@ -1,4 +1,4 @@
-# Only Used Tesla — Checkout Demo v9 (Ad Preview + Pay, Media After Checkout)
+# Only Used Tesla — Checkout Demo v10 (Ad Preview + Pay, Media After Checkout)
 
 This prototype adds a dedicated **Preview** step so sellers can see what their ad will look like **before payment** — even when photos/video are collected **after checkout**.
 
@@ -30,3 +30,7 @@ This demo shows where the Payment Element mounts (`#payment-element`).
 - `styles.css` — grayscale, fat-finger friendly styling
 - `app.js` — state, validation, step logic, preview rendering
 - `server/` — optional placeholder server notes (demo only)
+
+## Fixes in v10
+- Progress indicator now supports **6 steps** (no wrapping on desktop/mobile).
+- Preview step now **renders what the seller entered** (title, price, location, summary, VIN masked, Autopilot/FSD, add‑ons).

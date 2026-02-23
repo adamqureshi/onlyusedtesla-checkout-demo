@@ -128,85 +128,212 @@
     localStorage.removeItem(STORAGE_KEY);
     window.location.reload();
   }
+// ---------- Step navigation ----------
+const MAX_STEP = 6;
 
-  // ---------- Step navigation ----------
-  function setStep(nextStep) {
-    state.step = Math.max(1, Math.min(5, nextStep));
+function setStep(nextStep) {
+  state.step = Math.max(1, Math.min(MAX_STEP, nextStep));
 
-    $$("[data-step]").forEach((el) => {
-      el.classList.toggle("is-active", Number(el.dataset.step) === state.step);
-    });
+  $$("[data-step]").forEach((el) => {
+    el.classList.toggle("is-active", Number(el.dataset.step) === state.step);
+  });
 
-    const backBtn = $("[data-back]");
-    if (backBtn) backBtn.disabled = state.step === 1;
+  const backBtn = $("[data-back]");
+  if (backBtn) backBtn.disabled = state.step === 1;
 
-    $$("[data-step-index]").forEach((el) => {
-      const i = Number(el.dataset.stepIndex);
-      el.classList.toggle("is-active", i === state.step);
-      el.classList.toggle("is-complete", i < state.step);
-    });
+  $$("[data-step-index]").forEach((el) => {
+    const i = Number(el.dataset.stepIndex);
+    el.classList.toggle("is-active", i === state.step);
+    el.classList.toggle("is-complete", i < state.step);
+  });
 
-    updateStepperSub();
-    updateCtaSubhint();
+  updateStepperSub();
+  updateCtaSubhint();
 
-    $$("[data-cta-hint]").forEach((el) => {
-      el.textContent = `Step ${state.step} of 5 — ${hintForStep(state.step)}`;
-    });
+  $$("[data-cta-hint]").forEach((el) => {
+    el.textContent = `Step ${state.step} of ${MAX_STEP} — ${hintForStep(state.step)}`;
+  });
 
-    updateSummaryCounter();
-    updateMediaCounts();
-    updateVideoStatusLine();
-    updateHistoryUI();
-    updateNotifyUI();
-    syncCheckboxes();
-    updateGroupsUI();
-    updateSmsUI();
-    renderOrderLines();
-    updateTotalUI();
-    updatePayButtonLabel();
+  updateSummaryCounter();
+  updateMediaCounts();
+  updateVideoStatusLine();
+  updateHistoryUI();
+  updateNotifyUI();
+  syncCheckboxes();
+  updateGroupsUI();
+  updateSmsUI();
+  renderOrderLines();
+  updateTotalUI();
+  updatePayButtonLabel();
 
-    save(false);
-    window.scrollTo({ top: 0, behavior: "instant" });
+  // Populate buyer-facing preview
+  if (state.step === 4) updatePreviewUI();
 
-    if (state.step === 4) {
-      ensureStripeMounted().catch(() => {});
-    }
+  save(false);
+  window.scrollTo({ top: 0, behavior: "instant" });
+
+  // Mount Stripe Payment Element on the Payment step
+  if (state.step === 5) {
+    ensureStripeMounted().catch(() => {});
+  }
+}
+
+function hintForStep(step) {
+  switch (step) {
+    case 1: return "You’re off to a great start.";
+    case 2: return "You’re doing great. Keep it simple.";
+    case 3: return "Optional upgrades.";
+    case 4: return "Quick preview before payment.";
+    case 5: return "Ready to pay securely.";
+    case 6: return "Upload photos & video (optional).";
+    default: return "";
+  }
+}
+
+function updateStepperSub() {
+  const el = $("[data-stepper-sub]");
+  if (!el) return;
+
+  if (state.step < 6) {
+    el.textContent = "Photos & video are optional — you’ll upload after payment (Step 6).";
+  } else {
+    el.textContent = "Upload photos & video now (optional).";
+  }
+}
+
+function updateCtaSubhint() {
+  const el = $("[data-cta-subhint]");
+  if (!el) return;
+
+  if (state.step === 5) {
+    el.textContent = "Next: upload photos & video (optional).";
+    el.hidden = false;
+  } else {
+    el.hidden = true;
+  }
+}
+
+function formatMoneyUSD(value) {
+  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
+  if (!isFinite(n) || n <= 0) return "$—";
+  return `$${Math.round(n).toLocaleString("en-US")}`;
+}
+
+function updatePreviewUI() {
+  // Preview is buyer-facing, so we keep it simple and avoid showing sensitive info.
+  const titleEl = $("[data-preview-title]");
+  if (!titleEl) return;
+
+  const f = state.fields;
+
+  const year = String(f.year || "").trim();
+  const model = String(f.model || "").trim();
+
+  let title = "Tesla for sale";
+  if (year && model) title = `${year} Tesla ${model}`;
+  else if (model) title = `Tesla ${model}`;
+  else if (year) title = `${year} Tesla`;
+
+  titleEl.textContent = title;
+
+  const priceEl = $("[data-preview-price]");
+  if (priceEl) priceEl.textContent = formatMoneyUSD(f.price);
+
+  const metaEl = $("[data-preview-meta]");
+  const zip = String(f.zip || "").trim();
+
+  let stateName = "";
+  const stateEl = $("#state");
+  if (stateEl && stateEl.value) {
+    const opt = stateEl.selectedOptions && stateEl.selectedOptions[0];
+    stateName = opt ? opt.textContent : stateEl.value;
   }
 
-  function hintForStep(step) {
-    switch (step) {
-      case 1: return "You’re off to a great start.";
-      case 2: return "You’re doing great. Keep it simple.";
-      case 3: return "Optional upgrades.";
-      case 4: return "Review and pay securely.";
-      case 5: return "Submitted. Nice work.";
-      default: return "";
+  const locParts = [];
+  if (zip) locParts.push(zip);
+  if (stateName) locParts.push(stateName);
+
+  if (metaEl) metaEl.textContent = locParts.length ? `Near ${locParts.join(", ")}` : "Location will appear here.";
+
+  const summaryEl = $("[data-preview-summary]");
+  const summary = String(f.summary || "").trim();
+  if (summaryEl) {
+    summaryEl.textContent = summary ? summary : "Your description will appear here.";
+    summaryEl.classList.toggle("muted", !summary);
+  }
+
+  // Badges
+  const badgeWrap = $("[data-preview-badges]");
+  if (badgeWrap) {
+    badgeWrap.innerHTML = "";
+
+    const badges = [];
+    if (f.autopilot) badges.push("Autopilot");
+
+    if (f.fsd === "included") badges.push("FSD included");
+    if (f.fsd === "subscription") badges.push("FSD subscription");
+
+    if (f.history === "carfax") badges.push("CARFAX report");
+    if (f.history === "autocheck") badges.push("AutoCheck report");
+
+    if (f.videoAddon) badges.push("1‑min video");
+
+    badges.forEach((b) => {
+      const span = document.createElement("span");
+      span.className = "badge";
+      span.textContent = b;
+      badgeWrap.appendChild(span);
+    });
+  }
+
+  // Key details list
+  const factsWrap = $("[data-preview-facts]");
+  if (factsWrap) {
+    factsWrap.innerHTML = "";
+    const facts = [];
+
+    if (year) facts.push(`Year: ${year}`);
+    if (model) facts.push(`Model: ${model}`);
+
+    const milesN = Number(String(f.miles || "").replace(/[^0-9.]/g, ""));
+    if (isFinite(milesN) && milesN > 0) facts.push(`Mileage: ${Math.round(milesN).toLocaleString("en-US")} mi`);
+
+    // VIN (masked)
+    const vinNorm = normalizeVin(f.vin);
+    if (vinNorm) {
+      const safeVin = isVinValid(vinNorm) ? `•••••••••••${vinNorm.slice(-6)}` : vinNorm;
+      facts.push(`VIN: ${safeVin}`);
     }
 
-  function updateStepperSub() {
-    const el = $("[data-stepper-sub]");
-    if (!el) return;
-    if (state.step < 5) {
-      el.textContent = "Photos & video are optional — you’ll upload after payment (Step 5).";
+    if (f.autopilot) facts.push("Autopilot: Yes");
+    if (f.fsd === "included") facts.push("Full Self‑Driving: Paid upfront");
+    if (f.fsd === "subscription") facts.push("Full Self‑Driving: Subscription");
+
+    if (locParts.length) facts.push(`Location: ${locParts.join(", ")}`);
+
+    if (!facts.length) {
+      const li = document.createElement("li");
+      li.className = "muted";
+      li.textContent = "Your details will appear here.";
+      factsWrap.appendChild(li);
     } else {
-      el.textContent = "Now you can upload photos & video (optional).";
+      facts.forEach((t) => {
+        const li = document.createElement("li");
+        li.textContent = t;
+        factsWrap.appendChild(li);
+      });
     }
   }
 
-  function updateCtaSubhint() {
-    const el = $("[data-cta-subhint]");
-    if (!el) return;
-    if (state.step === 4) {
-      el.textContent = "Next: upload photos & video (optional).";
-      el.hidden = false;
-    } else {
-      el.hidden = true;
-    }
+  const mediaNote = $("[data-preview-media-note]");
+  if (mediaNote) {
+    mediaNote.textContent = f.videoAddon
+      ? "Photos (and your 1‑minute video) will appear here after payment."
+      : "Photos & video are optional. You can add them after payment.";
   }
+}
 
-  }
-
-  // ---------- Validation helpers ----------
+// ---------- Validation helpers ----------
   function setFieldState(validateKey, ok, message = "") {
     const fieldWrap = $(`[data-validate="${validateKey}"]`);
     if (!fieldWrap) return;
@@ -302,7 +429,7 @@
       else setFieldState("summary", true, "");
     }
 
-    if (step === 4) {
+    if (step === 5) {
       // Email required
       const email = String(state.fields.email || "").trim();
       if (!isEmailValid(email)) { ok = false; setFieldState("email", false, "Please enter a valid email address."); }
@@ -932,13 +1059,13 @@ function updateNotifyUI() {
       const result = await stripe.retrievePaymentIntent(clientSecret);
       const pi = result && result.paymentIntent;
       if (pi && (pi.status === "succeeded" || pi.status === "processing")) {
-        setStep(5);
+        setStep(6);
         stampReference();
         return;
       }
       setStripeError("Almost there — please follow any additional steps to complete payment.");
     } catch (e) {
-      setStep(5);
+      setStep(6);
       stampReference();
     }
   }
@@ -952,7 +1079,7 @@ function updateNotifyUI() {
   async function simulatePayment() {
     showToast("Processing payment…");
     await new Promise((r) => setTimeout(r, 700));
-    setStep(5);
+    setStep(6);
     stampReference();
   }
 
@@ -1069,7 +1196,7 @@ function updateNotifyUI() {
     // Pay
     const payBtn = $("[data-pay]");
     if (payBtn) payBtn.addEventListener("click", async () => {
-      const ok = validateStep(4);
+      const ok = validateStep(5);
       if (!ok) return;
       await payWithStripeIfConfigured();
     });
@@ -1242,7 +1369,7 @@ function updateNotifyUI() {
   load();
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get("success") === "1") state.step = 5;
+  if (params.get("success") === "1") state.step = 6;
 
   updateMediaTabUI();
   updateMediaCounts();
